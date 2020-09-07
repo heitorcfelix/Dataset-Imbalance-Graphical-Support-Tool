@@ -28,7 +28,7 @@
         <h2 class="classImbTitle">Class Imbalance</h1>
         <div id="horizBarDiv"></div>
         <div id="pieDiv"></div>
-        <div id="scatterDiv"></div>
+        <div id="lineDiv"></div>
     </div>
     <div id="scaleImbDiv">
         <h2 class="scaleImbTitle">Scale Imbalance</h1>
@@ -73,19 +73,6 @@
         //Parse the uploaded JSON
         function parseFile(){
             var data_json = JSON.parse(reader.result);
-            // dataset_info = d3.entries(data)[0]
-            // dataset_licenses = d3.entries(data)[1]
-            // dataset_categories = d3.entries(data)[2]
-            // dataset_images = d3.entries(data)[3]
-            // dataset_annotations = d3.entries(data)[4]
-
-            //TODO: tirar <<DEBUG>>
-            // console.log(dataset_info);
-            // console.log(dataset_licenses);
-            // console.log(dataset_categories);
-            // console.log(dataset_images);
-            // console.log(dataset_annotations);
-            // console.log(d3.keys(data));
             console.log(data_json);
             // reading the data and formatting in order to be easier to work with it in google charts
             dataset_info = new google.visualization.DataTable();
@@ -187,75 +174,67 @@
                 height: 500
             };
 
-            var pie_chart = new google.charts.Bar(document.getElementById('horizBarDiv'));
+            var horiz_chart = new google.charts.Bar(document.getElementById('horizBarDiv'));
 
             // The select handler. Call the chart's getSelection() method
             function selectHandler() {
-                var selectedItem = pie_chart.getSelection();
+                var selectedItem = horiz_chart.getSelection();
                 console.log(selectedItem)
                 if (selectedItem) {
-                    if(selectedItem.length > 0){
+                    if (selectedItem.length > 0) {
+                        var current_selected_classes = []
                         selectedItem.forEach(element => {
-                            current_selected_classes = data_horiz_bar.getValue(element.row, element.column);
-                            //TODO: tirar <<DEBUG>>
-                            console.log('The user selected ' + current_selected_classes); 
+                            current_selected_classes.push(element.row);
                         });
+                        var view = new google.visualization.DataView(merged_table);
+                        view.setRows(current_selected_classes)
+                        pie_chart.draw(view, options_pie);
                     } else {
-                        console.log("Reseted selection")
+                        pie_chart.draw(merged_table, options_pie);
                     }
                 }
             }
 
             // Listen for the 'select' event, and call my function selectHandler() when
             // the user selects something on the chart.
-            google.visualization.events.addListener(pie_chart, 'select', selectHandler);
+            google.visualization.events.addListener(horiz_chart, 'select', selectHandler);
 
-            pie_chart.draw(merged_table, google.charts.Bar.convertOptions(options_horiz_bar));
-
-
-            //Draw the pie chart
-            // data_pie_raw =[["label", "count"],
-            //             ["label1", 1],
-            //             [ "label2", 2],
-            //             [ "label3", 3],
-            //             [ "label4", 4],
-            //             [ "label5", 5]
-            //             ];
+            horiz_chart.draw(merged_table, google.charts.Bar.convertOptions(options_horiz_bar));
             
-            // var data_pie = google.visualization.arrayToDataTable(data_pie_raw);
             var options_pie = {
                 title: 'Proportion of selected classes',
-                width: 400,
-                height: 300,
+                width: 900,
+                height: 500,
             };
 
-            var chart = new google.visualization.PieChart(document.getElementById('pieDiv'));
+            var pie_chart = new google.visualization.PieChart(document.getElementById('pieDiv'));
 
-            chart.draw(merged_table, options_pie);
+            pie_chart.draw(merged_table, options_pie);
 
 
             //Draw the scatter plot chart
-            data_scatter_raw =[["label", "count"],
-                        [10, 10000],
-                        [ 30, 2000],
-                        [ 50, 1000],
-                        [ 60, 500],
-                        [ 80, 10]
+            data_scatter_raw =[["label", "1", "2"],
+                        [10, 10000, 9000],
+                        [ 30, 2000, 1000],
+                        [ 50, 1000, 500],
+                        [ 60, 500, 250],
+                        [ 80, 10, 5]
                         ];
             
             var data_scatter = google.visualization.arrayToDataTable(data_scatter_raw);
-            var options_scatter = {
-                title: 'Number of objects per image',
-                hAxis: {title: 'Number of Objects', minValue: 0, maxValue: 15},
-                vAxis: {title: 'Number of Images', 
-                        scaleType: 'log',
-                        minValue: 0, 
-                        maxValue: 15},
-                legend: 'none'
+            var options_line = {
+                    hAxis: {
+                    title: 'Number of Objects',
+                    logScale: false
+                    },
+                    vAxis: {
+                    title: 'Number of Images',
+                    logScale: false
+                    },
+                    colors: ['#a52714', '#097138']
             };
-            var chart = new google.visualization.ScatterChart(document.getElementById('scatterDiv'));
-
-            chart.draw(data_scatter, options_scatter);
+            var line_chart = new google.visualization.LineChart(document.getElementById('lineDiv'));
+            line_chart.draw(data_scatter, options_line);
         }
 
         function drawScaleImbalanceDas(dataset_categories, dataset_annotations){
