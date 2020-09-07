@@ -168,28 +168,12 @@
             // merging information to get class names
             var merged_table = google.visualization.data.join(dataset_categories, grouped_table,
                                 'right', [[0,0]], [1], [1]);
-
+            
+            // removing the id column (only used to match both tables)
             merged_table.removeColumn(0);
-
-            // set the view with the correct cols to be shown and the labels on first row
-            // var final_table = new google.visualization.DataTable();
-            // var rowData = [];
-            // for (var rowIdx=0; rowIdx < merged_table.getNumberOfRows(); rowIdx++) {
-            //     final_table.addColumn("number", merged_table.getValue(rowIdx, 1));
-            //     rowData.push(merged_table.getValue(rowIdx, 2));
-            // }
-            // final_table.addRow(rowData);
-            
-            // table = new google.visualization.Table(document.getElementById('debugDiv4'));
-            // table.draw(final_table, {showRowNumber: true, width: '100%', height: '100%'});
-            // view_horiz_bar.setRows(
-            //     view_horiz_bar.getFilteredRows([{column: 1, minValue: new Date(2007, 0, 1)}]));
-
-            
-            
-            //TODO: usar getSortedRows(sortColumns) para ordenar da classe com maior ocorrencia para a menor!
-            //TODO: usar getFilteredRows(filters) para filtrar a tabela!
-            //TODO: referencia: https://developers.google.com/chart/interactive/docs/reference#DataTable
+            merged_table.setColumnLabel(0, "Class");
+            merged_table.setColumnLabel(1, "Count");
+            merged_table.sort({column: 1, desc: true});
 
             var options_horiz_bar = {
                 chart: {
