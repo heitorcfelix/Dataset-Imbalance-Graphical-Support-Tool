@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <style>
+        .headingDiv {
+            border: 5px outset grey;
+            /* background-color: lightblue; */
+            text-align: center;
+        }
+        
+        .classImbTitle, .scaleImbTitle,  .objLocImbTitle{
+            text-align: center;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="headingDiv">
+        <h1>Dataset Imbalance Graphical Suport Tool</h1>
+        <p> Chosen dataset for analisys: <input type="file" onchange="loadFile()" /></p>
+    </div>
+    <div id="classImbDiv">
+        <h2 class="classImbTitle">Class Imbalance</h1>
+        <div id="horizBarDiv"></div>
+        <div id="pieDiv"></div>
+        <div id="scatterDiv"></div>
+    </div>
+    <div id="scaleImbDiv">
+        <h2 class="scaleImbTitle">Scale Imbalance</h1>
+    </div>
+    <div id="objLocImbDiv">
+        <h2 class="objLocImbTitle">Object Location Imbalance</h1>
+
+    </div>
+    <!-- TODO: tirar <<DEBUG>> -->
+    <div id="debugDiv">
+        <div id="debugDiv1"></div>
+        <div id="debugDiv2"></div>
+        <div id="debugDiv3"></div>
+        <div id="debugDiv4"></div>
+        <div id="debugDiv5"></div>
+        <div id="debugDiv6"></div>
+    </div>
+
+    <script>
+        //Loading all from google chart API that will be used
+        google.charts.load('current', {'packages':['bar']});
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.load('current', {'packages':['table']}); //TODO: tirar <<DEBUG>>
+
+        //Some globals that every chart can access
+        var current_selected_classes = [];
+
+        //open the file uploaded by user
+        var reader = new FileReader();  
+    
+        function loadFile() {      
+            var file = document.querySelector('input[type=file]').files[0];
+            //TODO: tirar <<DEBUG>>
+            console.log(file.name);
+
+            reader.addEventListener("load", parseFile, false);
+            if (file) {
+                reader.readAsText(file);
+            }
+        }
+    
+        //Parse the uploaded JSON
+        function parseFile(){
+            var data_json = JSON.parse(reader.result);
+            // dataset_info = d3.entries(data)[0]
+            // dataset_licenses = d3.entries(data)[1]
+            // dataset_categories = d3.entries(data)[2]
+            // dataset_images = d3.entries(data)[3]
+            // dataset_annotations = d3.entries(data)[4]
+
+            //TODO: tirar <<DEBUG>>
+            // console.log(dataset_info);
+            // console.log(dataset_licenses);
+            // console.log(dataset_categories);
+            // console.log(dataset_images);
+            // console.log(dataset_annotations);
+            // console.log(d3.keys(data));
+            console.log(data_json);
+            // reading the data and formatting in order to be easier to work with it in google charts
+            dataset_info = new google.visualization.DataTable();
+            dataset_info.addColumn('string', 'contributor');
+            dataset_info.addColumn('string', 'date_created');
+            dataset_info.addColumn('string', 'description');
+            dataset_info.addColumn('string', 'url');
+            dataset_info.addColumn('string', 'version');
+            dataset_info.addColumn('number', 'year');
+
+            dataset_info.addRow([data_json.info.contributor, 
+                        data_json.info.date_created,
+                        data_json.info.description,
+                        data_json.info.url,
+                        data_json.info.version,
+                        data_json.info.year]);
+
+            // TODO
+            // dataset_licenses = ;
+
+            dataset_categories = new google.visualization.DataTable();
+            dataset_categories.addColumn('number', 'id');
+            dataset_categories.addColumn('string', 'name');
+            dataset_categories.addColumn('string', 'supercategory');
+
+            for (var i = 0; i < data_json.categories.length; i++) {
+                dataset_categories.addRow([data_json.categories[i].id,
+                                            data_json.categories[i].name,
+                                            data_json.categories[i].supercategory]);
+            }
+
+            // TODO
+            // dataset_images = ;
+
+            dataset_annotations = new google.visualization.DataTable();
+            dataset_annotations.addColumn('number', 'area');
+            dataset_annotations.addColumn('number', 'bbox1');
+            dataset_annotations.addColumn('number', 'bbox2');
+            dataset_annotations.addColumn('number', 'bbox3');
+            dataset_annotations.addColumn('number', 'bbox4');
+            dataset_annotations.addColumn('number', 'category_id');
+            dataset_annotations.addColumn('number', 'id');
+            dataset_annotations.addColumn('string', 'image_id');
+            dataset_annotations.addColumn('number', 'is_crowd');
+            // dataset_categories.addColumn('????', 'segmentation');
+
+            for (var i = 0; i < data_json.annotations.length; i++) {
+                dataset_annotations.addRow([data_json.annotations[i].area,
+                                            data_json.annotations[i].bbox[0],
+                                            data_json.annotations[i].bbox[1],
+                                            data_json.annotations[i].bbox[2],
+                                            data_json.annotations[i].bbox[3],
+                                            data_json.annotations[i].category_id,
+                                            data_json.annotations[i].id,
+                                            data_json.annotations[i].image_id,
+                                            data_json.annotations[i].iscrowd]);
+            }
+            
+            //TODO: tirar <<DEBUG>>
+            var table = new google.visualization.Table(document.getElementById('debugDiv1'));
+            table.draw(dataset_info, {showRowNumber: true, width: '100%', height: '100%'});
+            table = new google.visualization.Table(document.getElementById('debugDiv2'));
+            table.draw(dataset_categories, {showRowNumber: true, width: '100%', height: '100%'});
+            table = new google.visualization.Table(document.getElementById('debugDiv3'));
+            table.draw(dataset_annotations, {showRowNumber: true, width: '100%', height: '100%'});
+
+            // TODO: talvez mostrar na tela as informações da base (dataset_info)
+            
+            //Draw each dashboard
+            drawClassImbalanceDash(dataset_categories, dataset_annotations);
+            drawScaleImbalanceDas(dataset_categories, dataset_annotations);
+            drawLocationImbalanceDash(dataset_categories, dataset_annotations);
+        }
+
+        function drawClassImbalanceDash(dataset_categories, dataset_annotations){
+            //Google's API defines the table as:
+            //    - first row is the label of data
+            //    - the folowing rows are the data
+            // data_horiz_bar_raw =[["label", "count"],
+            //             ["label1", 1],
+            //             [ "label2", 2],
+            //             [ "label3", 3],
+            //             [ "label4", 4],
+            //             [ "label5", 5]
+            //             ];
+            // var data_horiz_bar = google.visualization.arrayToDataTable(data_horiz_bar_raw);
+
+            var view_horiz_bar = new google.visualization.DataView(data);
+            view_horiz_bar.setRows(
+                view_horiz_bar.getFilteredRows([{column: 1, minValue: new Date(2007, 0, 1)}]));
+            
+            //TODO: usar getSortedRows(sortColumns) para ordenar da classe com maior ocorrencia para a menor!
+            //TODO: usar getFilteredRows(filters) para filtrar a tabela!
+            //TODO: referencia: https://developers.google.com/chart/interactive/docs/reference#DataTable
+
+            var options_horiz_bar = {
+                chart: {
+                    title: 'Total intances per class'//,
+                    // subtitle: 'AMENO DORIME',
+                },
+                bars: 'horizontal', // Required for Material Bar Charts.
+                // 'view': {'columns': [0, 3]}, //TODO: usar isso pra filtrar os dados do JSON!
+                selectionMode: 'multiple',
+                width: 900,
+                height: 500
+            };
+
+            var pie_chart = new google.charts.Bar(document.getElementById('horizBarDiv'));
+
+            // The select handler. Call the chart's getSelection() method
+            function selectHandler() {
+                var selectedItem = pie_chart.getSelection();
+                console.log(selectedItem)
+                if (selectedItem) {
+                    if(selectedItem.length > 0){
+                        selectedItem.forEach(element => {
+                            current_selected_classes = data_horiz_bar.getValue(element.row, element.column);
+                            //TODO: tirar <<DEBUG>>
+                            console.log('The user selected ' + current_selected_classes); 
+                        });
+                    } else {
+                        console.log("Reseted selection")
+                    }
+                }
+            }
+
+            // Listen for the 'select' event, and call my function selectHandler() when
+            // the user selects something on the chart.
+            google.visualization.events.addListener(pie_chart, 'select', selectHandler);
+
+            pie_chart.draw(data_horiz_bar, google.charts.Bar.convertOptions(options_horiz_bar));
+
+
+            //Draw the pie chart
+            data_pie_raw =[["label", "count"],
+                        ["label1", 1],
+                        [ "label2", 2],
+                        [ "label3", 3],
+                        [ "label4", 4],
+                        [ "label5", 5]
+                        ];
+            
+            var data_pie = google.visualization.arrayToDataTable(data_pie_raw);
+            var options_pie = {
+                title: 'Proportion of selected classes',
+                width: 400,
+                height: 300,
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('pieDiv'));
+
+            chart.draw(data_pie, options_pie);
+
+
+            //Draw the scatter plot chart
+            data_scatter_raw =[["label", "count"],
+                        [10, 10000],
+                        [ 30, 2000],
+                        [ 50, 1000],
+                        [ 60, 500],
+                        [ 80, 10]
+                        ];
+            
+            var data_scatter = google.visualization.arrayToDataTable(data_scatter_raw);
+            var options_scatter = {
+                title: 'Number of objects per image',
+                hAxis: {title: 'Number of Objects', minValue: 0, maxValue: 15},
+                vAxis: {title: 'Number of Images', 
+                        scaleType: 'log',
+                        minValue: 0, 
+                        maxValue: 15},
+                legend: 'none'
+            };
+            var chart = new google.visualization.ScatterChart(document.getElementById('scatterDiv'));
+
+            chart.draw(data_scatter, options_scatter);
+        }
+
+        function drawScaleImbalanceDas(dataset_categories, dataset_annotations){
+
+        }
+
+        function drawLocationImbalanceDash(dataset_categories, dataset_annotations){
+
+        }
+    </script>
+</body>
+</html>
