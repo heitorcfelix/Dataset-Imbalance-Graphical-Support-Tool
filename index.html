@@ -145,12 +145,12 @@
             }
             
             //TODO: tirar <<DEBUG>>
-            var table = new google.visualization.Table(document.getElementById('debugDiv1'));
-            table.draw(dataset_info, {showRowNumber: true, width: '100%', height: '100%'});
-            table = new google.visualization.Table(document.getElementById('debugDiv2'));
-            table.draw(dataset_categories, {showRowNumber: true, width: '100%', height: '100%'});
-            table = new google.visualization.Table(document.getElementById('debugDiv3'));
-            table.draw(dataset_annotations, {showRowNumber: true, width: '100%', height: '100%'});
+            // var table = new google.visualization.Table(document.getElementById('debugDiv1'));
+            // table.draw(dataset_info, {showRowNumber: true, width: '100%', height: '100%'});
+            // table = new google.visualization.Table(document.getElementById('debugDiv2'));
+            // table.draw(dataset_categories, {showRowNumber: true, width: '100%', height: '100%'});
+            // table = new google.visualization.Table(document.getElementById('debugDiv3'));
+            // table.draw(dataset_annotations, {showRowNumber: true, width: '100%', height: '100%'});
 
             // TODO: talvez mostrar na tela as informações da base (dataset_info)
             
@@ -161,21 +161,31 @@
         }
 
         function drawClassImbalanceDash(dataset_categories, dataset_annotations){
-            //Google's API defines the table as:
-            //    - first row is the label of data
-            //    - the folowing rows are the data
-            // data_horiz_bar_raw =[["label", "count"],
-            //             ["label1", 1],
-            //             [ "label2", 2],
-            //             [ "label3", 3],
-            //             [ "label4", 4],
-            //             [ "label5", 5]
-            //             ];
-            // var data_horiz_bar = google.visualization.arrayToDataTable(data_horiz_bar_raw);
+            // group by class name
+            var grouped_table = google.visualization.data.group(dataset_annotations, [5], 
+                        [{'column': 5, 'aggregation': google.visualization.data.count, 'type': 'number'}]);
+            
+            // merging information to get class names
+            var merged_table = google.visualization.data.join(dataset_categories, grouped_table,
+                                'right', [[0,0]], [1], [1]);
 
-            var view_horiz_bar = new google.visualization.DataView(data);
-            view_horiz_bar.setRows(
-                view_horiz_bar.getFilteredRows([{column: 1, minValue: new Date(2007, 0, 1)}]));
+            merged_table.removeColumn(0);
+
+            // set the view with the correct cols to be shown and the labels on first row
+            // var final_table = new google.visualization.DataTable();
+            // var rowData = [];
+            // for (var rowIdx=0; rowIdx < merged_table.getNumberOfRows(); rowIdx++) {
+            //     final_table.addColumn("number", merged_table.getValue(rowIdx, 1));
+            //     rowData.push(merged_table.getValue(rowIdx, 2));
+            // }
+            // final_table.addRow(rowData);
+            
+            // table = new google.visualization.Table(document.getElementById('debugDiv4'));
+            // table.draw(final_table, {showRowNumber: true, width: '100%', height: '100%'});
+            // view_horiz_bar.setRows(
+            //     view_horiz_bar.getFilteredRows([{column: 1, minValue: new Date(2007, 0, 1)}]));
+
+            
             
             //TODO: usar getSortedRows(sortColumns) para ordenar da classe com maior ocorrencia para a menor!
             //TODO: usar getFilteredRows(filters) para filtrar a tabela!
@@ -216,19 +226,19 @@
             // the user selects something on the chart.
             google.visualization.events.addListener(pie_chart, 'select', selectHandler);
 
-            pie_chart.draw(data_horiz_bar, google.charts.Bar.convertOptions(options_horiz_bar));
+            pie_chart.draw(merged_table, google.charts.Bar.convertOptions(options_horiz_bar));
 
 
             //Draw the pie chart
-            data_pie_raw =[["label", "count"],
-                        ["label1", 1],
-                        [ "label2", 2],
-                        [ "label3", 3],
-                        [ "label4", 4],
-                        [ "label5", 5]
-                        ];
+            // data_pie_raw =[["label", "count"],
+            //             ["label1", 1],
+            //             [ "label2", 2],
+            //             [ "label3", 3],
+            //             [ "label4", 4],
+            //             [ "label5", 5]
+            //             ];
             
-            var data_pie = google.visualization.arrayToDataTable(data_pie_raw);
+            // var data_pie = google.visualization.arrayToDataTable(data_pie_raw);
             var options_pie = {
                 title: 'Proportion of selected classes',
                 width: 400,
@@ -237,7 +247,7 @@
 
             var chart = new google.visualization.PieChart(document.getElementById('pieDiv'));
 
-            chart.draw(data_pie, options_pie);
+            chart.draw(merged_table, options_pie);
 
 
             //Draw the scatter plot chart
