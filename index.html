@@ -32,6 +32,11 @@
     </div>
     <div id="scaleImbDiv">
         <h2 class="scaleImbTitle">Scale Imbalance</h1>
+            <div id="stackedControlDiv">
+                <p>Medium: </p><input type="number" id="down_thresh"><p>² to</p><input type="number" id="up_thresh"><p>² pixels</p>
+            </div>
+            <div id="stackedDiv">
+            </div>
     </div>
     <div id="objLocImbDiv">
         <h2 class="objLocImbTitle">Object Location Imbalance</h1>
@@ -143,7 +148,7 @@
             
             //Draw each dashboard
             drawClassImbalanceDash(dataset_categories, dataset_annotations);
-            drawScaleImbalanceDas(dataset_categories, dataset_annotations);
+            drawScaleImbalanceDas(dataset_annotations);
             drawLocationImbalanceDash(dataset_categories, dataset_annotations);
         }
 
@@ -237,8 +242,90 @@
             line_chart.draw(data_scatter, options_line);
         }
 
-        function drawScaleImbalanceDas(dataset_categories, dataset_annotations){
+        function drawScaleImbalanceDas(dataset_annotations){
+            const threshold1 = document.getElementById('down_thresh');
+            const threshold2 = document.getElementById('up_thresh');
+            var thresh1 = 100;
+            var thresh2 = 150;
+            max_val = 1000; //TODO: get max from data
+            threshold1.value = thresh1;
+            threshold2.value = thresh2;
 
+            var _thresh1 = thresh1*thresh1;
+            var _thresh2 = thresh2*thresh2;
+
+            const inputHandler = function(e) {
+                const passed_value = parseInt(e.target.value);
+                if (this.id == "down_thresh"){
+                    if (passed_value >= 0 && passed_value <= thresh2 && passed_value <= max_val){
+                        thresh1 = passed_value;
+                        _thresh1 = thresh1*thresh1;
+                    } else {
+                        e.target.value = thresh1;
+                    }
+                } else {
+                    if(this.id == "up_thresh"){
+                        if (passed_value >= 0 && passed_value >= thresh1 && passed_value <= max_val){
+                            thresh2 = passed_value;
+                            _thresh2 = thresh2*thresh2;
+                        } else {
+                            e.target.value = thresh2;
+                        }
+                    }
+                }
+
+                //redrawing the chart
+                drawStackedBar(dataset_annotations, _thresh1, _thresh2);
+            };
+            threshold1.addEventListener('input', inputHandler);
+            threshold2.addEventListener('input', inputHandler);
+
+            drawStackedBar(dataset_annotations, _thresh1, _thresh2);
+        }
+
+        function drawStackedBar(dataset_annotations, _thresh1, _thresh2){
+            // getting the relevant data for this view
+            var data_stacked = new google.visualization.DataView(dataset_annotations);
+            data_stacked.hideColumns([1,2,3,4,5,6,7,8]);
+
+            // counting based on the set threshold values
+            var fomatted_data_stacked = google.visualization.data.group(
+                data_stacked,
+                [{'column': 0, 'modifier': getSize, 'type': 'string'}],
+                [{'column': 1, 'aggregation': google.visualization.data.count, 'type': 'number'}]
+            );
+
+            function getSize(area) {
+                var ret = "medium";
+                if(area >= _thresh2) ret = "big";
+                else if(area < _thresh1) ret = "small";
+                
+                return ret;
+            }
+
+            // transposing the table
+            var row1 = ['Size'];
+            var row2 = ['Class Proportion'];
+            for (var rowIndex = 0; rowIndex < fomatted_data_stacked.getNumberOfRows(); rowIndex++){
+                row1.push(fomatted_data_stacked.getValue(rowIndex, 0));
+                row2.push(fomatted_data_stacked.getValue(rowIndex, 1));
+            }
+
+            var transposed_stacked_table = google.visualization.arrayToDataTable([row1, row2]);
+
+            var options_fullStacked = {
+                isStacked: 'percent',
+                height: 300,
+                legend: {position: 'top', maxLines: 1},
+                hAxis: {
+                    minValue: 0,
+                    ticks: [0, .25, .5, .75, 1]
+                }
+            };
+
+            //TODO: fixar a ordem das labels! de small pra big! (atualmente vai a depender dos dados, creio eu)
+            var stacked_chart = new google.visualization.BarChart(document.getElementById("stackedDiv"));
+            stacked_chart.draw(transposed_stacked_table, options_fullStacked);
         }
 
         function drawLocationImbalanceDash(dataset_categories, dataset_annotations){
