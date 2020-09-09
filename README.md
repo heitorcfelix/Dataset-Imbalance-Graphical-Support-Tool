@@ -11,7 +11,9 @@ Projeto desenvolvido para a disciplina de Visualização de dados do CIn-UFPE, s
 - [ ] pegar tamanho máximo dos bbox da base
 - [ ] colocar texto sobre small e big bboxes
 - [ ] ordenar classes: small-medium-big
+- [ ] tratar dados para o gráfico de coordenadas paralelas
 - [ ] implementar gráfico de coordenadas paralelas
+- [ ] implementar interação entre gráfico de coordenadas paralelas e tamanho de bboxes(???)
 ### object location imbalance
 - [ ] tratar dados para formação dos heatmaps
 - [ ] implementar heatmaps
