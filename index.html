@@ -143,8 +143,30 @@
                                             data_json.categories[i].supercategory]);
             }
 
-            // TODO
-            // dataset_images = ;
+            dataset_images = new google.visualization.DataTable();
+            dataset_images.addColumn('string', 'id');
+            dataset_images.addColumn('number', 'width');
+            dataset_images.addColumn('number', 'height');
+            dataset_images.addColumn('string', 'file_name');
+            dataset_images.addColumn('number', 'license');
+            dataset_images.addColumn('string', 'flickr_url');
+            dataset_images.addColumn('string', 'coco_url');
+            dataset_images.addColumn('string', 'date_captured');
+
+            dataset_ImgsIds = []
+
+
+            for (var i = 0; i < data_json.images.length; i++) {
+                dataset_images.addRow([data_json.images[i].id,
+                                        data_json.images[i].width,
+                                        data_json.images[i].height,
+                                        data_json.images[i].file_name,
+                                        data_json.images[i].license,
+                                        data_json.images[i].flickr_url,
+                                        data_json.images[i].coco_url,
+                                        data_json.images[i].date_captured]);
+                dataset_ImgsIds.push(data_json.images[i].id)
+            }
 
             dataset_annotations = new google.visualization.DataTable();
             dataset_annotations.addColumn('number', 'area');
@@ -157,6 +179,7 @@
             dataset_annotations.addColumn('string', 'image_id');
             dataset_annotations.addColumn('number', 'is_crowd');
             // dataset_categories.addColumn('????', 'segmentation');
+            dataset_catToImgs = {}
 
             for (var i = 0; i < data_json.annotations.length; i++) {
                 dataset_annotations.addRow([data_json.annotations[i].area,
@@ -168,6 +191,12 @@
                                             data_json.annotations[i].id,
                                             data_json.annotations[i].image_id,
                                             data_json.annotations[i].iscrowd]);
+                if (dataset_catToImgs[data_json.annotations[i].category_id] != undefined){
+                    dataset_catToImgs[data_json.annotations[i].category_id].push(data_json.annotations[i].image_id)
+                } else {
+                    dataset_catToImgs[data_json.annotations[i].category_id] = []
+                    dataset_catToImgs[data_json.annotations[i].category_id].push(data_json.annotations[i].image_id)
+                }
             }
             
             //TODO: tirar <<DEBUG>>
@@ -181,12 +210,12 @@
             // TODO: talvez mostrar na tela as informações da base (dataset_info)
             
             //Draw each dashboard
-            drawClassImbalanceDash(dataset_categories, dataset_annotations);
+            drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds);
             drawScaleImbalanceDash(dataset_annotations);
             drawLocationImbalanceDash(dataset_categories, dataset_annotations);
         }
 
-        function drawClassImbalanceDash(dataset_categories, dataset_annotations){
+        function drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds){
             // group by class name
             var grouped_table = google.visualization.data.group(dataset_annotations, [5], 
                         [{'column': 5, 'aggregation': google.visualization.data.count, 'type': 'number'}]);
@@ -218,18 +247,34 @@
             // The select handler. Call the chart's getSelection() method
             function selectHandler() {
                 var selectedItem = horiz_chart.getSelection();
-                console.log(selectedItem)
                 if (selectedItem) {
                     if (selectedItem.length > 0) {
-                        var current_selected_classes = []
+                        current_selected_classes = [];
                         selectedItem.forEach(element => {
                             current_selected_classes.push(element.row);
                         });
+                        var old_selected_classes = [];
+                        for (i of current_selected_classes) {
+                            class_name = merged_table.getValue(i, 0);
+                            for (var j = 0; j < dataset_categories.getNumberOfRows(); j++) {
+                                if (class_name == dataset_categories.getValue(j, 1)) {
+                                    old_selected_classes.push(j);
+                                }
+                            }
+                        }
                         var view = new google.visualization.DataView(merged_table);
-                        view.setRows(current_selected_classes)
+                        view.setRows(current_selected_classes);
                         pie_chart.draw(view, options_pie);
+                        data_line = getLineChartValues(old_selected_classes, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
+                        line_chart.draw(data_line, options_line);
                     } else {
                         pie_chart.draw(merged_table, options_pie);
+                        all_rows = [];
+                        for (var i = 0; i < dataset_categories.getNumberOfRows(); i++) {
+                            all_rows.push(i);
+                        }
+                        data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
+                        line_chart.draw(data_line, options_line);
                     }
                 }
             }
@@ -252,28 +297,26 @@
 
 
             //Draw the scatter plot chart
-            data_scatter_raw =[["label", "1", "2"],
-                        [10, 10000, 9000],
-                        [ 30, 2000, 1000],
-                        [ 50, 1000, 500],
-                        [ 60, 500, 250],
-                        [ 80, 10, 5]
-                        ];
-            
-            var data_scatter = google.visualization.arrayToDataTable(data_scatter_raw);
+            all_rows = [];
+            for (var i = 0; i < dataset_categories.getNumberOfRows(); i++) {
+                all_rows.push(i);
+            }
+            var data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
             var options_line = {
                     hAxis: {
                     title: 'Number of Objects',
-                    logScale: false
+                    logScale: false,
+                    minValue: 0,
+                    format: '0'
                     },
                     vAxis: {
                     title: 'Number of Images',
-                    logScale: false
+                    logScale: false,
+                    minValue: 0
                     },
-                    colors: ['#a52714', '#097138']
             };
-            var line_chart = new google.visualization.LineChart(document.getElementById('lineDiv'));
-            line_chart.draw(data_scatter, options_line);
+            var line_chart = new google.visualization.ScatterChart(document.getElementById('lineDiv'));
+            line_chart.draw(data_line, options_line);
         }
 
         function drawScaleImbalanceDash(dataset_annotations){
@@ -282,7 +325,7 @@
             const threshold2 = document.getElementById('up_thresh');
             var thresh1 = 100;
             var thresh2 = 150;
-            max_val = 1000; //TODO: get max from data
+            max_val = 5000; //TODO: get max from data
             threshold1.value = thresh1;
             threshold2.value = thresh2;
 
@@ -507,6 +550,46 @@
         
         function drawLocationImbalanceDash(dataset_categories, dataset_annotations){
 
+        }
+
+        function getLineChartValues(selected_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds) {
+            const countOccurrences = (arr, val) => arr.reduce((a, v) => (v === val ? a + 1 : a), 0);
+            var imageOccurrences = {};
+            for (var key of selected_rows) {
+                var cat = dataset_categories.getValue(Number(key), 1);
+                imageOccurrences[cat] = {};
+                for (var img_id of dataset_ImgsIds) {
+                    var cont = countOccurrences(dataset_catToImgs[key], img_id);
+                    if (imageOccurrences[cat][cont] > 0) {
+                        imageOccurrences[cat][cont] += 1;
+                    } else {
+                        imageOccurrences[cat][cont] = 1;
+                    }
+                }
+            }
+            data_line_raw = [['x']];
+            for (i of selected_rows) {
+                data_line_raw[0].push(dataset_categories.getValue(i, 1));
+            }
+            var max_value = 0;
+            for (i of Object.keys(imageOccurrences)) {
+                const max_class = Math.max.apply(Math, Object.keys(imageOccurrences[i]));
+                if (max_value < max_class) {
+                    max_value = max_class;
+                }
+            }
+            for (var i = 0; i <= max_value; i++) {
+                data_line_raw.push([i]);
+                for (j of selected_rows) {
+                    var cat = dataset_categories.getValue(j, 1);
+                    if (imageOccurrences[cat][i] > 0) {
+                        data_line_raw[i+1].push(imageOccurrences[cat][i]);
+                    } else {
+                        data_line_raw[i+1].push(0);
+                    }
+                }
+            }
+            return google.visualization.arrayToDataTable(data_line_raw);
         }
     </script>
 </body>
