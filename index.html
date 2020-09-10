@@ -402,14 +402,15 @@
             data_stacked.setColumns([6,1,2,3,4,5]);
             
             var csvFormattedDataTable = google.visualization.dataTableToCsv(data_stacked.toDataTable());
+            console.log(csvFormattedDataTable);
             var data_parallel = d3.csv.parseRows(csvFormattedDataTable, function(d) {
                 return {
                     class: d[0],
-                    area: parseInt(d[1]),
-                    width: parseInt(d[2]),
-                    height: parseInt(d[3]),
-                    center_x: parseInt(d[4]),
-                    centerY: parseInt(d[5])
+                    area: parseInt(d[1].replace(/,/g, "")),
+                    width: parseInt(d[2].replace(/,/g, "")),
+                    height: parseInt(d[3].replace(/,/g, "")),
+                    center_x: parseInt(d[4].replace(/,/g, "")),
+                    centerY: parseInt(d[5].replace(/,/g, ""))
                 };
             });
 
@@ -426,7 +427,8 @@
                             // .paddingInner([0.1]);
                     } else {
                         return y[d] = d3.scale.linear()
-                            .domain(d3.extent(data_parallel, function(p) { return +p[d]; }))
+                            // .domain(d3.extent(data_parallel, function(p) { return +p[d]; }))
+                            .domain(d3.extent(data_parallel, p=>p[d]))
                             .range([height, 0]);
                 }
             }));
