@@ -8,13 +8,12 @@
     <style>
         .headingDiv {
             border: 5px outset grey;
-            /* background-color: lightblue; */
             text-align: center;
         }
         
-        .classImbTitle, .scaleImbTitle,  .objLocImbTitle{
+        /* .classImbTitle, .scaleImbTitle,  .objLocImbTitle{
             text-align: center;
-        }
+        } */
 
         svg {
             font: 10px sans-serif;
@@ -48,6 +47,42 @@
             text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
             cursor: move;
         }
+
+        #classImbDiv, #scaleImbDiv, #objLocImbDiv {
+            /* height: 0px;
+            overflow: hidden; */
+            visibility: hidden;
+            display: grid;
+        }
+        .classImbTitle{
+            text-align: center;
+            grid-column-start: 1;
+            grid-column-end: 3;
+            grid-row-start: 1;
+            grid-row-end: 2;
+        }
+        #horizBarDiv {
+            border: 2px outset grey;
+            width: 500;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            grid-row-start: 2;
+            grid-row-end: 3;
+        }
+        #pieDiv {
+            border: 2px outset grey;
+            grid-column-start: 2;
+            grid-column-end: 3;
+            grid-row-start: 2;
+            grid-row-end: 4;
+        }
+        #lineDiv {
+            border: 2px outset grey;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            grid-row-start: 3;
+            grid-row-end: 4;
+        }
     </style>
 </head>
 
@@ -66,7 +101,11 @@
         <h2 class="scaleImbTitle">Scale Imbalance</h1>
             <div id="parallelDiv"></div>
             <div id="stackedControlDiv">
-                <p>Medium: </p><input type="number" id="down_thresh"><p>² to</p><input type="number" id="up_thresh"><p>² pixels</p>
+                <h3>Boundingboxes scales:</h3>
+                <p>Small: Up to <span id="label_thresh_low"></span>² pixels</p>
+                <p>Medium: <input type="number" id="down_thresh">² to <input type="number" id="up_thresh">² pixels</p>
+                <p>Big: Over <span id="label_thresh_high"></span>² pixels</p>
+
             </div>
             <div id="stackedDiv">
             </div>
@@ -86,7 +125,6 @@
     </div>
 
     <script src="http://d3js.org/d3.v3.min.js"></script>
-    <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
     <script>
         //Loading all from google chart API that will be used
         google.charts.load('current', {'packages':['bar']});
@@ -102,8 +140,6 @@
     
         function loadFile() {      
             var file = document.querySelector('input[type=file]').files[0];
-            //TODO: tirar <<DEBUG>>
-            console.log(file.name);
 
             reader.addEventListener("load", parseFile, false);
             if (file) {
@@ -114,7 +150,7 @@
         //Parse the uploaded JSON
         function parseFile(){
             var data_json = JSON.parse(reader.result);
-            console.log(data_json);
+            // console.log(data_json);
             // reading the data and formatting in order to be easier to work with it in google charts
             dataset_info = new google.visualization.DataTable();
             dataset_info.addColumn('string', 'contributor');
@@ -217,17 +253,15 @@
 
             // TODO: talvez mostrar na tela as informações da base (dataset_info)
             
+            //Set divs visibility so the content is shown
+            document.getElementById("classImbDiv").style.visibility = "visible";
+            document.getElementById("scaleImbDiv").style.visibility = "visible";
+            document.getElementById("objLocImbDiv").style.visibility = "visible";
+
             //Draw each dashboard
             drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds);
             drawScaleImbalanceDash(dataset_annotations, dataset_categories);
             drawLocationImbalanceDash(dataset_categories, dataset_annotations);
-        }
-        function updateAllCharts() {
-
-        }
-
-        function resetAllCharts() {
-
         }
 
         function drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds){
@@ -248,13 +282,13 @@
             var options_horiz_bar = {
                 chart: {
                     title: 'Total intances per class'//,
-                    // subtitle: 'AMENO DORIME',
                 },
                 bars: 'horizontal', // Required for Material Bar Charts.
-                // 'view': {'columns': [0, 3]}, //TODO: usar isso pra filtrar os dados do JSON!
                 selectionMode: 'multiple',
-                width: 900,
-                height: 500
+                // width: 900,
+                // height: 500
+                width: '100%',
+                height: '100%'
             };
 
             var horiz_chart = new google.charts.Bar(document.getElementById('horizBarDiv'));
@@ -306,8 +340,10 @@
             
             var options_pie = {
                 title: 'Proportion of selected classes',
-                width: 900,
-                height: 500,
+                // width: 500,
+                // height: 500,
+                width: '100%',
+                height: '100%'
             };
 
             var pie_chart = new google.visualization.PieChart(document.getElementById('pieDiv'));
@@ -344,7 +380,10 @@
             const threshold2 = document.getElementById('up_thresh');
             var thresh1 = 100;
             var thresh2 = 150;
-            // max_val = 5000; //TODO: get max from data
+
+            document.getElementById("label_thresh_low").innerHTML = thresh1;
+            document.getElementById("label_thresh_high").innerHTML = thresh2;
+
             threshold1.value = thresh1;
             threshold2.value = thresh2;
 
@@ -354,22 +393,22 @@
             const inputHandler = function(e) {
                 const passed_value = parseInt(e.target.value);
                 if (this.id == "down_thresh"){
-                    // if (passed_value >= 0 && passed_value <= thresh2 && passed_value <= max_val){
                     if (passed_value >= 0 && passed_value <= thresh2){
                         thresh1 = passed_value;
                         _thresh1 = thresh1*thresh1;
                     } else {
                         e.target.value = thresh1;
                     }
+                    document.getElementById("label_thresh_low").innerHTML = thresh1;
                 } else {
                     if(this.id == "up_thresh"){
-                        // if (passed_value >= 0 && passed_value >= thresh1 && passed_value <= max_val){
                         if (passed_value >= 0 && passed_value >= thresh1){
                             thresh2 = passed_value;
                             _thresh2 = thresh2*thresh2;
                         } else {
                             e.target.value = thresh2;
                         }
+                        document.getElementById("label_thresh_high").innerHTML = thresh2;
                     }
                 }
 
@@ -393,7 +432,6 @@
                         height = 500 - margin.top - margin.bottom;
             
             var x = d3.scale.ordinal().rangePoints([0, width], 1),
-            // var x = d3.scaleBand().range([0, width], 1),
                 y = {},
                 dragging = {};
 
@@ -409,7 +447,6 @@
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
             
-            // var data_stacked = new google.visualization.DataView(dataset_annotations);
             var selected_cols_data = new google.visualization.DataView(dataset_annotations);
             if (current_selected_classes.length > 0){
                 selected_cols_data.setRows(selected_cols_data.getFilteredRows([{column: 5, 
@@ -448,10 +485,8 @@
                         return y[d] = d3.scale.ordinal()
                             .domain(domain_y)
                             .rangePoints([height, 0]);
-                            // .paddingInner([0.1]);
                     } else {
                         return y[d] = d3.scale.linear()
-                            // .domain(d3.extent(data_parallel, function(p) { return +p[d]; }))
                             .domain(d3.extent(data_parallel, p=>p[d]))
                             .range([height, 0]);
                 }

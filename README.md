@@ -8,7 +8,7 @@ Projeto desenvolvido para a disciplina de Visualização de dados do CIn-UFPE, s
 - [x] implementar gráfico de numero de objetos por imagem
 - [ ] implementar gráfico de quantas imagens do total contém ao menos 1 exemplo da classe (por classe)
 ### scale imbalance
-- [ ] colocar texto sobre small e big bboxes
+- [x] colocar texto sobre small e big bboxes
 - [x] ordenar classes: small-medium-big
 - [x] tratar dados para o gráfico de coordenadas paralelas
 - [x] implementar gráfico de coordenadas paralelas
