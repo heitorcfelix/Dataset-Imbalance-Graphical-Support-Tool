@@ -218,10 +218,14 @@
             
             //Draw each dashboard
             drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds);
-            drawScaleImbalanceDash(dataset_annotations);
+            drawScaleImbalanceDash(dataset_annotations, dataset_categories);
             drawLocationImbalanceDash(dataset_categories, dataset_annotations);
         }
         function updateAllCharts() {
+
+        }
+
+        function resetAllCharts() {
 
         }
 
@@ -277,6 +281,7 @@
                         pie_chart.draw(view, options_pie);
                         data_line = getLineChartValues(old_selected_classes, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
                         line_chart.draw(data_line, options_line);
+                        drawParallelCoordChart(dataset_annotations, dataset_categories, old_selected_classes);
                     } else {
                         pie_chart.draw(merged_table, options_pie);
                         all_rows = [];
@@ -285,6 +290,7 @@
                         }
                         data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
                         line_chart.draw(data_line, options_line);
+                        drawParallelCoordChart(dataset_annotations, dataset_categories, []);
                     }
                 }
             }
@@ -329,7 +335,7 @@
             line_chart.draw(data_line, options_line);
         }
 
-        function drawScaleImbalanceDash(dataset_annotations){
+        function drawScaleImbalanceDash(dataset_annotations, dataset_categories){
             
             const threshold1 = document.getElementById('down_thresh');
             const threshold2 = document.getElementById('up_thresh');
@@ -370,11 +376,15 @@
             threshold1.addEventListener('input', inputHandler);
             threshold2.addEventListener('input', inputHandler);
 
-            drawParallelCoordChart(dataset_annotations);
             drawStackedBar(dataset_annotations, _thresh1, _thresh2);
+            drawParallelCoordChart(dataset_annotations, dataset_categories, current_selected_classes);
         }
 
-        function drawParallelCoordChart(dataset_annotations){
+        function drawParallelCoordChart(dataset_annotations, dataset_categories, current_selected_classes){
+            //deleting previous svg, if any
+            d3.select("#parallelDiv").select("svg").remove();
+
+            //drawing new chart
             var margin = {top: 30, right: 10, bottom: 10, left: 10},
                         width = 960 - margin.left - margin.right,
                         height = 500 - margin.top - margin.bottom;
@@ -390,19 +400,30 @@
                 foreground;
 
             var svg = d3.select("#parallelDiv").append("svg")
+            
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
             
             // var data_stacked = new google.visualization.DataView(dataset_annotations);
-            var merged_table = google.visualization.data.join(dataset_annotations, dataset_categories,
+            var selected_cols_data = new google.visualization.DataView(dataset_annotations);
+            if (current_selected_classes.length > 0){
+                selected_cols_data.setRows(selected_cols_data.getFilteredRows([{column: 5, 
+                    test: function(value, rowId, columnId, datatable) { 
+                        var match_value = false;
+                        current_selected_classes.forEach(element => {
+                            match_value = (match_value || (value === element)); });
+                        return match_value; }
+                    }]));
+            }
+            var merged_table = google.visualization.data.join(selected_cols_data, dataset_categories,
                                 'left', [[5,0]], [0,3,4,9,10], [1]);
             var data_stacked = new google.visualization.DataView(merged_table);
             data_stacked.setColumns([6,1,2,3,4,5]);
             
+            
             var csvFormattedDataTable = google.visualization.dataTableToCsv(data_stacked.toDataTable());
-            console.log(csvFormattedDataTable);
             var data_parallel = d3.csv.parseRows(csvFormattedDataTable, function(d) {
                 return {
                     class: d[0],
