@@ -95,6 +95,7 @@
 
         //Some globals that every chart can access
         var current_selected_classes = [];
+        var _thresh1 , _thresh2;
 
         //open the file uploaded by user
         var reader = new FileReader();  
@@ -282,6 +283,7 @@
                         data_line = getLineChartValues(old_selected_classes, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
                         line_chart.draw(data_line, options_line);
                         drawParallelCoordChart(dataset_annotations, dataset_categories, old_selected_classes);
+                        drawStackedBar(dataset_annotations, old_selected_classes);
                     } else {
                         pie_chart.draw(merged_table, options_pie);
                         all_rows = [];
@@ -291,6 +293,7 @@
                         data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
                         line_chart.draw(data_line, options_line);
                         drawParallelCoordChart(dataset_annotations, dataset_categories, []);
+                        drawStackedBar(dataset_annotations, []);
                     }
                 }
             }
@@ -345,8 +348,8 @@
             threshold1.value = thresh1;
             threshold2.value = thresh2;
 
-            var _thresh1 = thresh1*thresh1;
-            var _thresh2 = thresh2*thresh2;
+            _thresh1 = thresh1*thresh1;
+            _thresh2 = thresh2*thresh2;
 
             const inputHandler = function(e) {
                 const passed_value = parseInt(e.target.value);
@@ -376,7 +379,7 @@
             threshold1.addEventListener('input', inputHandler);
             threshold2.addEventListener('input', inputHandler);
 
-            drawStackedBar(dataset_annotations, _thresh1, _thresh2);
+            drawStackedBar(dataset_annotations, current_selected_classes);
             drawParallelCoordChart(dataset_annotations, dataset_categories, current_selected_classes);
         }
 
@@ -559,9 +562,18 @@
         }
         
 
-        function drawStackedBar(dataset_annotations, _thresh1, _thresh2){
+        function drawStackedBar(dataset_annotations, current_selected_classes){
             // getting the relevant data for this view
             var data_stacked = new google.visualization.DataView(dataset_annotations);
+            if (current_selected_classes.length > 0){
+                data_stacked.setRows(data_stacked.getFilteredRows([{column: 5, 
+                    test: function(value, rowId, columnId, datatable) { 
+                        var match_value = false;
+                        current_selected_classes.forEach(element => {
+                            match_value = (match_value || (value === element)); });
+                        return match_value; }
+                    }]));
+            }
             data_stacked.hideColumns([1,2,3,4,5,6,7,8]);
 
             // counting based on the set threshold values
@@ -572,22 +584,32 @@
             );
 
             function getSize(area) {
-                var ret = "medium";
-                if(area >= _thresh2) ret = "big";
-                else if(area < _thresh1) ret = "small";
+                var ret = "Medium";
+                if(area >= _thresh2) ret = "Big";
+                else if(area < _thresh1) ret = "Small";
                 
                 return ret;
             }
 
-            // transposing the table
-            var row1 = ['Size'];
-            var row2 = ['Class Proportion'];
+            var transposed_stacked_table = new google.visualization.DataTable();
+            transposed_stacked_table.addColumn('string', 'Size');
+            transposed_stacked_table.addColumn('number', 'Small');
+            transposed_stacked_table.addColumn('number', 'Medium');
+            transposed_stacked_table.addColumn('number', 'Big');
+            transposed_stacked_table.addRow(["Class Proportion", 0, 0 ,0]);
             for (var rowIndex = 0; rowIndex < fomatted_data_stacked.getNumberOfRows(); rowIndex++){
-                row1.push(fomatted_data_stacked.getValue(rowIndex, 0));
-                row2.push(fomatted_data_stacked.getValue(rowIndex, 1));
+                var row1 = fomatted_data_stacked.getValue(rowIndex, 0);
+                var row2 = fomatted_data_stacked.getValue(rowIndex, 1);
+                if(row1 === 'Small') {
+                    transposed_stacked_table.setCell(0,1, row2);
+                } else if (row1 === 'Medium') {
+                    transposed_stacked_table.setCell(0,2, row2);
+                } else if (row1 === 'Big') {
+                    transposed_stacked_table.setCell(0,3, row2);
+                }
             }
 
-            var transposed_stacked_table = google.visualization.arrayToDataTable([row1, row2]);
+            var view_stacked_table = new google.visualization.DataView(transposed_stacked_table);
 
             var options_fullStacked = {
                 isStacked: 'percent',
@@ -599,9 +621,8 @@
                 }
             };
 
-            //TODO: fixar a ordem das labels! de small pra big! (atualmente vai a depender dos dados, creio eu)
             var stacked_chart = new google.visualization.BarChart(document.getElementById("stackedDiv"));
-            stacked_chart.draw(transposed_stacked_table, options_fullStacked);
+            stacked_chart.draw(view_stacked_table, options_fullStacked);
         }
         
         function drawLocationImbalanceDash(dataset_categories, dataset_annotations){

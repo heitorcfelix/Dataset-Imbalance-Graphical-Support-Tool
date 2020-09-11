@@ -9,11 +9,11 @@ Projeto desenvolvido para a disciplina de Visualização de dados do CIn-UFPE, s
 - [ ] implementar gráfico de quantas imagens do total contém ao menos 1 exemplo da classe (por classe)
 ### scale imbalance
 - [ ] colocar texto sobre small e big bboxes
-- [ ] ordenar classes: small-medium-big
+- [x] ordenar classes: small-medium-big
 - [x] tratar dados para o gráfico de coordenadas paralelas
 - [x] implementar gráfico de coordenadas paralelas
 - [x] corrigir seleção da coordenada de classes
-- [ ] implementar interação com seleção das classes (do primeiro gráfico)
+- [x] implementar interação com seleção das classes (do primeiro gráfico)
 ### object location imbalance
 - [ ] tratar dados para formação dos heatmaps
 - [ ] implementar heatmaps
