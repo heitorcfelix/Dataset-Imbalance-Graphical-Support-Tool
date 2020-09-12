@@ -5,19 +5,18 @@ Projeto desenvolvido para a disciplina de Visualização de dados do CIn-UFPE, s
 ### class imbalance
 - [ ] agrupar classes pequenas no piechart
 - [ ] ativar detalhamento das classes pequenas mostrando nova piechart
-- [ ] implementar gráfico de numero de objetos por imagem
+- [x] implementar gráfico de numero de objetos por imagem
 - [ ] implementar gráfico de quantas imagens do total contém ao menos 1 exemplo da classe (por classe)
 ### scale imbalance
-- [ ] pegar tamanho máximo dos bbox da base
-- [ ] colocar texto sobre small e big bboxes
-- [ ] ordenar classes: small-medium-big
-- [ ] tratar dados para o gráfico de coordenadas paralelas
-- [ ] implementar gráfico de coordenadas paralelas
-- [ ] implementar interação entre gráfico de coordenadas paralelas e tamanho de bboxes(???)
+- [x] colocar texto sobre small e big bboxes
+- [x] ordenar classes: small-medium-big
+- [x] tratar dados para o gráfico de coordenadas paralelas
+- [x] implementar gráfico de coordenadas paralelas
+- [x] corrigir seleção da coordenada de classes
+- [x] implementar interação com seleção das classes (do primeiro gráfico)
 ### object location imbalance
 - [ ] tratar dados para formação dos heatmaps
 - [ ] implementar heatmaps
 ### general
-- [ ] propagar escolhas de cada gráfico para todo dashboard (???)
 - [ ] esconder inputs do scale imbalance quando inicia a página
 - [ ] organizar layout da página como um todo
