@@ -15,8 +15,11 @@ Projeto desenvolvido para a disciplina de Visualização de dados do CIn-UFPE, s
 - [x] corrigir seleção da coordenada de classes
 - [x] implementar interação com seleção das classes (do primeiro gráfico)
 ### object location imbalance
-- [ ] tratar dados para formação dos heatmaps
-- [ ] implementar heatmaps
+- [x] tratar dados para formação dos heatmaps
+- [x] implementar heatmaps
+- [ ] exibir eixos junto do heatmap (incluindo o de escala)
+- [ ] adicionar título com a classe representada em cada heatmap
+- [ ] colocar interação com a seleção do primeiro gráfico do dashboard
 ### general
-- [ ] esconder inputs do scale imbalance quando inicia a página
+- [x] esconder inputs do scale imbalance quando inicia a página
 - [ ] organizar layout da página como um todo
