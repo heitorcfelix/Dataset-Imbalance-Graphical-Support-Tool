@@ -258,12 +258,12 @@
             document.getElementById("objLocImbDiv").style.visibility = "visible";
 
             //Draw each dashboard
-            drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds);
+            drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds, dataset_images);
             drawScaleImbalanceDash(dataset_annotations, dataset_categories);
-            drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images);
+            drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images, []);
         }
 
-        function drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds){
+        function drawClassImbalanceDash(dataset_categories, dataset_annotations, dataset_catToImgs, dataset_ImgsIds, dataset_images){
             // group by class name
             var grouped_table = google.visualization.data.group(dataset_annotations, [5], 
                         [{'column': 5, 'aggregation': google.visualization.data.count, 'type': 'number'}]);
@@ -317,6 +317,7 @@
                         line_chart.draw(data_line, options_line);
                         drawParallelCoordChart(dataset_annotations, dataset_categories, old_selected_classes);
                         drawStackedBar(dataset_annotations, old_selected_classes);
+                        drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images, old_selected_classes)
                     } else {
                         pie_chart.draw(merged_table, options_pie);
                         all_rows = [];
@@ -327,6 +328,7 @@
                         line_chart.draw(data_line, options_line);
                         drawParallelCoordChart(dataset_annotations, dataset_categories, []);
                         drawStackedBar(dataset_annotations, []);
+                        drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images, [])
                     }
                 }
             }
@@ -659,7 +661,26 @@
             stacked_chart.draw(view_stacked_table, options_fullStacked);
         }
         
-        function drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images){
+        function drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images, old_selected_classes){
+            d3.select("#objLocImbDiv").selectAll("*").remove();
+
+            if (old_selected_classes.length <= 0) {
+                var old_selected_classes = [];
+                for (var row = 0; row < dataset_categories.getNumberOfRows(); row++) {
+                    old_selected_classes.push(dataset_categories.getValue(row,0));
+                }
+            }
+            var selected_rows = [];
+            var view_categories = new google.visualization.DataView(dataset_categories);
+            for (cat of old_selected_classes) {
+                for (var row = 0; row < dataset_categories.getNumberOfRows(); row++) {
+                    if (dataset_categories.getValue(row,0) == cat) {
+                        selected_rows.push(cat);
+                    }
+                }
+            }
+            view_categories.setRows(selected_rows)
+
             var merged_table = google.visualization.data.join(dataset_annotations, dataset_categories,
                                 'left', [[5,0]], [7,9,10], [1]);
             var merged_table = google.visualization.data.join(merged_table, dataset_images,
@@ -673,28 +694,31 @@
             var cats = [];
             var data = [];
             var data_matrix = [];
-            for (var rowIndex=0; rowIndex < dataset_categories.getNumberOfRows(); rowIndex++){
-                cats.push(dataset_categories.getValue(rowIndex, 0));
+            for (var rowIndex=0; rowIndex < view_categories.getNumberOfRows(); rowIndex++){
+                cats.push(view_categories.getValue(rowIndex, 0));
                 data.push([]);
                 data_matrix[rowIndex] = [];
-                for (var row=0; row < 10; row++){
+                for (var row=0; row < 9; row++){
                     data_matrix[rowIndex][row] = [];
-                    for (var col=0; col < 10; col++){
+                    for (var col=0; col < 9; col++){
                         data_matrix[rowIndex][row][col] = 0;
                     }
                 };
             };
             
             for (var row = 0; row < data_stacked.getNumberOfRows(); row++) {
-                const x_axis = Math.floor(data_stacked.getValue(row, 1)/data_stacked.getValue(row, 3)*9);
-                const y_axis = Math.floor(data_stacked.getValue(row, 2)/data_stacked.getValue(row, 4)*9);
-                data_matrix[data_stacked.getValue(row,0)][y_axis][x_axis] += 1;
+                for (var i = 0; i < view_categories.getNumberOfRows(); i++) {
+                    if (data_stacked.getValue(row,0) == view_categories.getValue(i,0)) {
+                        const x_axis = Math.floor(data_stacked.getValue(row, 1)/data_stacked.getValue(row, 3)*8);
+                        const y_axis = Math.floor(data_stacked.getValue(row, 2)/data_stacked.getValue(row, 4)*8);
+                        data_matrix[i][y_axis][x_axis] += 1;
+                    }
+                }
             }
-
-            for (var rowIndex=0; rowIndex < dataset_categories.getNumberOfRows(); rowIndex++){
+            for (var rowIndex=0; rowIndex < view_categories.getNumberOfRows(); rowIndex++){
                 data[rowIndex] = [];
-                for (var row=0; row < 10; row++){
-                    for (var col=0; col < 10; col++){
+                for (var row=0; row < 9; row++){
+                    for (var col=0; col < 9; col++){
                         data[rowIndex].push({group: col, variable: row, value: data_matrix[rowIndex][row][col]});
                     }
                 };
@@ -717,43 +741,21 @@
                         .append("g")
                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-                        // data = [[{group: "A", variable: "v1", value: "20"},
-                        // {group: "B", variable: "v2", value: "20"},
-                        // {group: "C", variable: "v3", value: "20"},
-                        // {group: "D", variable: "v4", value: "20"}],
-                        // [{group: "A", variable: "v1", value: "60"},
-                        // {group: "B", variable: "v2", value: "60"},
-                        // {group: "C", variable: "v3", value: "60"},
-                        // {group: "D", variable: "v4", value: "60"}],
-                        // [{group: "A", variable: "v1", value: "100"},
-                        // {group: "B", variable: "v2", value: "100"},
-                        // {group: "C", variable: "v3", value: "100"},
-                        // {group: "D", variable: "v4", value: "100"}]]
-                        // Labels of row and columns -> unique identifier of the column called 'group' and 'variable'
-            var myGroups = [0,1,2,3,4,5,6,7,8,9]
-            var myVars = [0,1,2,3,4,5,6,7,8,9]
+            // Labels of row and columns -> unique identifier of the column called 'group' and 'variable'
+            var myGroups = [0,1,2,3,4,5,6,7,8]
+            var myVars = [0,1,2,3,4,5,6,7,8]
             // Build X scales and axis:
             var x = d3.scale.ordinal()
                     .rangePoints([0, width])
                     // .range([ 0, width ])
                     .domain(myGroups);
                     // .padding(0.05);
-            // svg.append("g")
-            //         .style("font-size", 15)
-            //         .attr("transform", "translate(0," + height + ")")
-            //         .call(d3.axisBottom(x).tickSize(0))
-            //         .select(".domain").remove()
-            
             // Build Y scales and axis:
             var y = d3.scale.ordinal()
                     .rangePoints([0, width])
                     // .range([ height, 0 ])
                     .domain(myVars);
                     // .padding(0.05);
-            // svg.append("g")
-            //         .style("font-size", 15)
-            //         .call(d3.axisLeft(y).tickSize(0))
-            //         .select(".domain").remove()
             
             // Build color scale
             var myColor = d3.scale.linear()
@@ -791,9 +793,23 @@
                 .style("stroke", "none")
                 .style("opacity", 0.8);
             }
+
+            // add the squares
+            for (i in cats) {
+                d3.select("svg#heatmap_"+i)
+                .selectAll("text")
+                .append("text")
+                .attr("x", 0)
+                .attr("y", -20)
+                .attr("text-anchor", "left")
+                .style("font-size", "14px")
+                .style("fill", "grey")
+                .style("max-width", 400)
+                .text("A short description of the take-away message of this chart." + i);
+            }
             
             // add the squares
-            for (i of cats) {
+            for (i in cats) {
                 d3.select("svg#heatmap_"+i)
                 .selectAll("rect")
                 .data(data[i], function(d) {return d.group+':'+d.variable;})
@@ -805,7 +821,7 @@
                 .attr("ry", 4)
                 .attr("width", 38)//x.rangeBand() )
                 .attr("height", 38)//y.rangeBand() )
-                .style("fill", function(d) { return myColor(d.value/grouped_table.getValue(i,1)*100)} )
+                .style("fill", function(d) { return myColor(d.value/grouped_table.getValue(old_selected_classes[i],1)*100)} )
                 .style("stroke-width", 4)
                 .style("stroke", "none")
                 .style("opacity", 0.8)
