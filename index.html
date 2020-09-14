@@ -7,14 +7,13 @@
     <!-- <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script> -->
 
     <style>
+        body {
+            width: 1000px;
+        }
         .headingDiv {
             border: 5px outset grey;
             text-align: center;
         }
-        
-        /* .classImbTitle, .scaleImbTitle,  .objLocImbTitle{
-            text-align: center;
-        } */
 
         svg {
             font: 10px sans-serif;
@@ -49,41 +48,86 @@
             cursor: move;
         }
 
-        #classImbDiv, #scaleImbDiv, #objLocImbDiv {
-            /* height: 0px;
-            overflow: hidden; */
+        #classImbDiv {
             visibility: hidden;
-            display: grid;
+            width: 1000px;
+        } 
+        
+        #scaleImbDiv {
+            visibility: hidden;
+            width: 1000px;
+            position: absolute;
+            top: 1200px;
         }
-        .classImbTitle{
+        
+        #objLocImbDiv {
+            visibility: hidden;
+            width: 1000px;
+            position: absolute;
+            top: 1950px;
+        }
+
+        .classImbTitle, .scaleImbTitle, .objLocImbTitle{
+            width: 1000;
             text-align: center;
-            grid-column-start: 1;
-            grid-column-end: 3;
-            grid-row-start: 1;
-            grid-row-end: 2;
         }
+
+        /* .scaleImbTitle
+        {
+            width: 870;
+            text-align: center;
+        } */
+
         #horizBarDiv {
+            position: absolute;
+            top: 200px;
             border: 2px outset grey;
-            width: 500;
-            grid-column-start: 1;
-            grid-column-end: 2;
-            grid-row-start: 2;
-            grid-row-end: 3;
+            width: 500px;
+            height: 1000px;
         }
         #pieDiv {
+            position: absolute;
+            top: 200px;
+            left: 510px;
             border: 2px outset grey;
-            grid-column-start: 2;
-            grid-column-end: 3;
-            grid-row-start: 2;
-            grid-row-end: 4;
+            width: 500px;
+            height: 500px;
         }
         #lineDiv {
+            position: absolute;
+            top: 700px;
+            left: 510px;
             border: 2px outset grey;
-            grid-column-start: 1;
-            grid-column-end: 2;
-            grid-row-start: 3;
-            grid-row-end: 4;
+            width: 500px;
+            height: 500px;
         }
+
+        #down_thresh, #up_thresh {
+            width: 5ch;
+        }
+        #stackedControlDiv {
+            border: 2px outset grey;
+            position: absolute;
+            top: 575px;
+            width: 250px;
+            height: 170px;
+        }
+        #parallelDiv {
+            border: 2px outset grey;
+        }
+        #stackedDiv {
+            border: 2px outset grey;
+            position: absolute;
+            top: 575px;
+            left: 250px;
+            width: 750px;
+            height: 170px;
+        }
+        #heatMapDiv {
+            border: 2px outset grey;
+            width: 1000px;
+        }
+        
     </style>
 </head>
 
@@ -113,7 +157,7 @@
     </div>
     <div id="objLocImbDiv">
         <h2 class="objLocImbTitle">Object Location Imbalance</h1>
-            <div id="heatMapDiv"></div>
+        <div id="heatMapDiv"></div>
     </div>
     <!-- TODO: tirar <<DEBUG>> -->
     <div id="debugDiv">
@@ -284,10 +328,10 @@
                 },
                 bars: 'horizontal', // Required for Material Bar Charts.
                 selectionMode: 'multiple',
-                // width: 900,
+                // width: 500
                 // height: 500
-                width: '100%',
-                height: '100%'
+                width: '95%'
+                // height: '100%'
             };
 
             var horiz_chart = new google.charts.Bar(document.getElementById('horizBarDiv'));
@@ -340,7 +384,7 @@
             var options_pie = {
                 title: 'Proportion of selected classes',
                 // width: 500,
-                // height: 500,
+                // height: 500
                 width: '100%',
                 height: '100%'
             };
@@ -357,17 +401,18 @@
             }
             var data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
             var options_line = {
-                    hAxis: {
-                    title: 'Number of Objects',
-                    logScale: false,
-                    minValue: 0,
-                    format: '0'
-                    },
-                    vAxis: {
-                    title: 'Number of Images',
-                    logScale: false,
-                    minValue: 0
-                    },
+                width: '100%',
+                hAxis: {
+                title: 'Number of Objects',
+                logScale: false,
+                minValue: 0,
+                format: '0'
+                },
+                vAxis: {
+                title: 'Number of Images',
+                logScale: false,
+                minValue: 0
+                }
             };
             var line_chart = new google.visualization.ScatterChart(document.getElementById('lineDiv'));
             line_chart.draw(data_line, options_line);
@@ -427,7 +472,7 @@
 
             //drawing new chart
             var margin = {top: 30, right: 10, bottom: 10, left: 10},
-                        width = 960 - margin.left - margin.right,
+                        width = 1000 - margin.left - margin.right,
                         height = 500 - margin.top - margin.bottom;
             
             var x = d3.scale.ordinal().rangePoints([0, width], 1),
@@ -544,6 +589,7 @@
                 .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
                 .append("text")
                 .style("text-anchor", "middle")
+                .style("font-weight", "bold")
                 .attr("y", -9)
                 .text(function(d) { return d; });
 
@@ -647,7 +693,8 @@
 
             var options_fullStacked = {
                 isStacked: 'percent',
-                height: 300,
+                height: '100%',
+                width: '100%',
                 legend: {position: 'top', maxLines: 1},
                 hAxis: {
                     minValue: 0,
@@ -663,9 +710,9 @@
             var merged_table = google.visualization.data.join(dataset_annotations, dataset_categories,
                                 'left', [[5,0]], [7,9,10], [1]);
             var merged_table = google.visualization.data.join(merged_table, dataset_images,
-                                'left', [[1,0]], [0,2,3], [1,2]);
+                                'left', [[1,0]], [0,2,3,4], [1,2]);
             var data_stacked = new google.visualization.DataView(merged_table);
-            data_stacked.setColumns([1,2,3,4,5]);
+            data_stacked.setColumns([1,2,3,5,6,4]);
 
             var grouped_table = google.visualization.data.group(dataset_annotations, [5], 
                         [{'column': 5, 'aggregation': google.visualization.data.count, 'type': 'number'}]);
@@ -701,12 +748,12 @@
             };
 
             // set the dimensions and margins of the graph
-            var margin = {top: 80, right: 25, bottom: 30, left: 40},
+            var margin = {top: 50, right: 50, bottom: 50, left: 50},
                 width = 450 - margin.left - margin.right,
                 height = 450 - margin.top - margin.bottom;
 
             // append the svg object to the body of the page
-            var svg = d3.select("#objLocImbDiv")
+            var svg = d3.select("#heatMapDiv")
                         .selectAll("svg")
                         .data(cats)
                         .enter()
@@ -715,8 +762,14 @@
                         .attr("height", height + margin.top + margin.bottom)
                         .attr("id", function(d, i) { return "heatmap_" + i; })
                         .append("g")
-                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+                        .attr("class", "heatClassLabel")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .append("g")
+                        .append("text")
+                        .style("font-weight", "bold")
+                        .style("font-size", "20px")
+                        .text(function(d) { return dataset_categories.getValue(d, 1); });
+            
                         // data = [[{group: "A", variable: "v1", value: "20"},
                         // {group: "B", variable: "v2", value: "20"},
                         // {group: "C", variable: "v3", value: "20"},
@@ -762,7 +815,7 @@
                             .range([d3.rgb("#007AFF"), d3.rgb('#FFF500')]);
             
             // create a tooltip
-            var tooltip = d3.select("#objLocImbDiv")
+            var tooltip = d3.select("#heatMapDiv")
                             .append("div")
                             .style("opacity", 0)
                             .attr("class", "tooltip")
@@ -782,8 +835,8 @@
             }
             var mousemove = function(d) {
                 tooltip.html("The exact value of<br>this cell is: " + d.value)
-                .style("left", (d3.event.pageX+70) + "px")
-                .style("top", (d3.event.pageY) + "px");
+                .style("left", (d3.event.pageX+20) + "px")
+                .style("top", (d3.event.pageY-1950) + "px");
             }
             var mouseleave = function(d) {
                 tooltip.style("opacity", 0)
@@ -800,7 +853,7 @@
                 .enter()
                 .append("rect")
                 .attr("x", function(d) { return x(d.group) })
-                .attr("y", function(d) { return y(d.variable) })
+                .attr("y", function(d) { return y(d.variable) + margin.bottom})
                 .attr("rx", 4)
                 .attr("ry", 4)
                 .attr("width", 38)//x.rangeBand() )
