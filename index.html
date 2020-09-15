@@ -7,10 +7,8 @@
     <!-- <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script> -->
 
     <style>
-        body {
-            width: 1000px;
-        }
         .headingDiv {
+            width: 994px;
             border: 5px outset grey;
             text-align: center;
         }
@@ -55,7 +53,7 @@
         
         #scaleImbDiv {
             visibility: hidden;
-            width: 1000px;
+            width: 1004px;
             position: absolute;
             top: 1200px;
         }
@@ -108,7 +106,7 @@
         #stackedControlDiv {
             border: 2px outset grey;
             position: absolute;
-            top: 575px;
+            top: 573px;
             width: 250px;
             height: 170px;
         }
@@ -118,7 +116,7 @@
         #stackedDiv {
             border: 2px outset grey;
             position: absolute;
-            top: 575px;
+            top: 573px;
             left: 250px;
             width: 750px;
             height: 170px;
@@ -323,15 +321,14 @@
             merged_table.sort({column: 1, desc: true});
 
             var options_horiz_bar = {
-                chart: {
-                    title: 'Total intances per class'//,
-                },
-                bars: 'horizontal', // Required for Material Bar Charts.
+                title: 'Total instances per class',
+                legend: { position: "none" },
+                // hAxis: { ticks: [5,10,20,50] },
+                hAxis: { gridlines: { interval: [10, 20, 100, 1000] } },
+                bars: 'horizontal',
                 selectionMode: 'multiple',
-                // width: 500
-                // height: 500
-                width: '95%'
-                // height: '100%'
+                width: 450,
+                height: 950
             };
 
             var horiz_chart = new google.charts.Bar(document.getElementById('horizBarDiv'));
@@ -385,6 +382,7 @@
             
             var options_pie = {
                 title: 'Proportion of selected classes',
+                legend: { position: 'top', maxLines: 3 },
                 // width: 500,
                 // height: 500
                 width: '100%',
@@ -403,6 +401,7 @@
             }
             var data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
             var options_line = {
+                legend: { position: 'top', maxLines: 3 },
                 width: '100%',
                 hAxis: {
                 title: 'Number of Objects',
@@ -788,18 +787,24 @@
                         .append("g")
                         .attr("class", "heatClassLabel")
                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-                        .append("g")
-                        .append("text")
-                        .style("font-weight", "bold")
-                        .style("font-size", "20px")
-                        .text(function(d) { 
-                            var class_label = "error";
-                            for (var i = 0; i < dataset_categories.getNumberOfRows(); i++){
-                                if (d === dataset_categories.getValue(d, 0)) {
-                                    class_label = dataset_categories.getValue(d, 1);
-                                }
-                            }
-                            return class_label; });
+
+            // Putting a title on each heatmap
+            d3.select("#heatMapDiv")
+                .selectAll("svg")
+                .append("g")
+                .append("text")
+                .attr("x", 10)
+                .attr("y", margin.top-5)
+                .style("font-weight", "bold")
+                .style("font-size", "20px")
+                .text(function(d) { 
+                var class_label = "error";
+                for (var i = 0; i < dataset_categories.getNumberOfRows(); i++){
+                    if (d === dataset_categories.getValue(d, 0)) {
+                        class_label = dataset_categories.getValue(d, 1);
+                    }
+                }
+                return class_label; });
             
             var myGroups = [0,1,2,3,4,5,6,7,8,9]
             var myVars = [0,1,2,3,4,5,6,7,8,9]
@@ -821,6 +826,33 @@
                             .domain([1,100])
                             .interpolate(d3.interpolateHcl)
                             .range([d3.rgb("#007AFF"), d3.rgb('#FFF500')]);
+
+            // Create color scale bar
+            var rects = d3.select("#heatMapDiv")
+                        .selectAll("svg")
+                        .selectAll(".rects")
+                        .data(d3.range(0,100,2)) //number of small rects that forms the scale
+                        .enter()
+                        .append("rect")
+                        .attr("y", (d,i)=>50 + i*5)
+                        .attr("height", 5)
+                        .attr("x", 395)
+                        .attr("width", 20)
+                        .attr("fill", d=>myColor(100-d));
+                        // .attr("stroke", "gray");
+
+            // Create label of color scale bar
+            var rects = d3.select("#heatMapDiv")
+                        .selectAll("svg")
+                        .selectAll(".scaleBarLabel")
+                        .data([100, 75, 50, 25, 0]) //TODO: substituir pelo min e max de cada heatmap!!
+                        .enter()
+                        .append("text")
+                        .attr("text-anchor", "end")
+                        .attr("x", 390)
+                        .attr("y", (d,i)=>55 + i*61)
+                        .text(d=>d);
+
             
             // create a tooltip
             var tooltip = d3.select("#heatMapDiv")
@@ -854,18 +886,18 @@
             }
 
             // add the squares
-            for (i in cats) {
-                d3.select("svg#heatmap_"+i)
-                .selectAll("text")
-                .append("text")
-                .attr("x", 0)
-                .attr("y", -20)
-                .attr("text-anchor", "left")
-                .style("font-size", "14px")
-                .style("fill", "grey")
-                .style("max-width", 400)
-                .text("A short description of the take-away message of this chart." + i);
-            }
+            // for (i in cats) {
+            //     d3.select("svg#heatmap_"+i)
+            //     .selectAll("text")
+            //     .append("text")
+            //     .attr("x", 0)
+            //     .attr("y", -20)
+            //     .attr("text-anchor", "left")
+            //     .style("font-size", "14px")
+            //     .style("fill", "grey")
+            //     .style("max-width", 400);
+            //     // .text("A short description of the take-away message of this chart." + i);
+            // }
             
             // add the squares
             for (i in cats) {
@@ -874,12 +906,12 @@
                 .data(data[i], function(d) {return d.group+':'+d.variable;})
                 .enter()
                 .append("rect")
-                .attr("x", function(d) { return x(d.group) })
+                .attr("x", function(d) { return 10 + x(d.group) })
                 .attr("y", function(d) { return y(d.variable) + margin.bottom})
                 .attr("rx", 4)
                 .attr("ry", 4)
-                .attr("width", 38)//x.rangeBand() )
-                .attr("height", 38)//y.rangeBand() )
+                .attr("width", 38)
+                .attr("height", 38)
                 .style("fill", function(d) { return myColor(d.value/grouped_table.getValue(old_selected_classes[i],1)*100)} )
                 .style("stroke-width", 4)
                 .style("stroke", "none")
