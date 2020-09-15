@@ -709,7 +709,7 @@
         }
         
         function drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images, old_selected_classes){
-            // d3.select("#objLocImbDiv").selectAll("*").remove();
+            d3.select("#heatMapDiv").selectAll("svg").remove();
 
             if (old_selected_classes.length <= 0) {
                 var old_selected_classes = [];
@@ -792,7 +792,14 @@
                         .append("text")
                         .style("font-weight", "bold")
                         .style("font-size", "20px")
-                        .text(function(d) { return dataset_categories.getValue(d, 1); });
+                        .text(function(d) { 
+                            var class_label = "error";
+                            for (var i = 0; i < dataset_categories.getNumberOfRows(); i++){
+                                if (d === dataset_categories.getValue(d, 0)) {
+                                    class_label = dataset_categories.getValue(d, 1);
+                                }
+                            }
+                            return class_label; });
             
             var myGroups = [0,1,2,3,4,5,6,7,8,9]
             var myVars = [0,1,2,3,4,5,6,7,8,9]
