@@ -11,7 +11,8 @@
             font-family: helvetica, times, arial;
         }
         .headingDiv {
-            width: 994px;
+            /* width: 994px; */
+            width: 1794px;
             border: 5px outset grey;
             text-align: center;
         }
@@ -51,25 +52,25 @@
 
         #classImbDiv {
             visibility: hidden;
-            width: 1000px;
+            width: 1800px;
         } 
         
         #scaleImbDiv {
             visibility: hidden;
-            width: 1004px;
+            width: 1804px;
             position: absolute;
             top: 1200px;
         }
         
         #objLocImbDiv {
             visibility: hidden;
-            width: 1000px;
+            width: 1800px;
             position: absolute;
-            top: 1950px;
+            top: 1775px;
         }
 
         .classImbTitle, .scaleImbTitle, .objLocImbTitle{
-            width: 1000;
+            width: 1800;
             text-align: center;
         }
 
@@ -83,13 +84,13 @@
             position: absolute;
             top: 200px;
             border: 2px outset grey;
-            width: 500px;
+            width: 1300px;
             height: 1000px;
         }
         #pieDiv {
             position: absolute;
             top: 200px;
-            left: 510px;
+            left: 1310px;
             border: 2px outset grey;
             width: 500px;
             height: 500px;
@@ -97,36 +98,45 @@
         #lineDiv {
             position: absolute;
             top: 700px;
-            left: 510px;
+            left: 1310px;
             border: 2px outset grey;
             width: 500px;
             height: 500px;
+        }
+
+        #composedStackedDiv {
+            border: 2px outset grey;
+            position: absolute;
+            left:  1050px;
+            top: 68px;
+            height: 504px;
+        }
+
+        #parallelDiv {
+            border: 2px outset grey;
         }
 
         #down_thresh, #up_thresh {
             width: 5ch;
         }
         #stackedControlDiv {
-            border: 2px outset grey;
-            position: absolute;
-            top: 573px;
+            /* border: 2px outset grey; */
+            /* position: absolute; */
+            /* top: 573px; */
             width: 250px;
             height: 170px;
         }
-        #parallelDiv {
-            border: 2px outset grey;
-        }
         #stackedDiv {
-            border: 2px outset grey;
-            position: absolute;
-            top: 573px;
+            /* border: 2px outset grey; */
+            /* position: absolute; */
+            /* top: 573px; */
             left: 250px;
             width: 750px;
             height: 170px;
         }
         #heatMapDiv {
             border: 2px outset grey;
-            width: 1000px;
+            width: 1800px;
         }
         .scaleBarLabel {
             font: 12px sans-serif;
@@ -148,7 +158,8 @@
     </div>
     <div id="scaleImbDiv">
         <h2 class="scaleImbTitle">Scale Imbalance</h1>
-            <div id="parallelDiv"></div>
+        <div id="parallelDiv"></div>
+        <div id="composedStackedDiv">
             <div id="stackedControlDiv">
                 <h3>Boundingboxes scales:</h3>
                 <p>Small: Up to <span id="label_thresh_low"></span>² pixels</p>
@@ -158,6 +169,7 @@
             </div>
             <div id="stackedDiv">
             </div>
+        </div>
     </div>
     <div id="objLocImbDiv">
         <h2 class="objLocImbTitle">Object Location Imbalance</h1>
@@ -480,7 +492,7 @@
 
             //drawing new chart
             var margin = {top: 30, right: 10, bottom: 10, left: 10},
-                        width = 1000 - margin.left - margin.right,
+                        width = 1100 - margin.left - margin.right,
                         height = 500 - margin.top - margin.bottom;
             
             var x = d3.scale.ordinal().rangePoints([0, width], 1),
