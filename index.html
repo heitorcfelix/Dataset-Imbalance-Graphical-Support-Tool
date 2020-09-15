@@ -7,14 +7,17 @@
     <!-- <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script> -->
 
     <style>
+        body {
+            font-family: helvetica, times, arial;
+        }
         .headingDiv {
             width: 994px;
             border: 5px outset grey;
             text-align: center;
         }
 
-        svg {
-            font: 10px sans-serif;
+        #parallelDiv svg {
+            font: 14px sans-serif;
         }
 
         .background path {
@@ -124,6 +127,9 @@
         #heatMapDiv {
             border: 2px outset grey;
             width: 1000px;
+        }
+        .scaleBarLabel {
+            font: 12px sans-serif;
         }
         
     </style>
@@ -324,10 +330,11 @@
                 title: 'Total instances per class',
                 legend: { position: "none" },
                 // hAxis: { ticks: [5,10,20,50] },
-                hAxis: { gridlines: { interval: [10, 20, 100, 1000] } },
+                // hAxis: { gridlines: { count: 2 } }, //não tá fazendo diferença nenhuma! :/
                 bars: 'horizontal',
                 selectionMode: 'multiple',
-                width: 450,
+                // width: 450,
+                wodth: '100%',
                 height: 950
             };
 
@@ -515,7 +522,7 @@
                     area: parseInt(d[1].replace(/,/g, "")),
                     width: parseInt(d[2].replace(/,/g, "")),
                     height: parseInt(d[3].replace(/,/g, "")),
-                    center_x: parseInt(d[4].replace(/,/g, "")),
+                    centerX: parseInt(d[4].replace(/,/g, "")),
                     centerY: parseInt(d[5].replace(/,/g, ""))
                 };
             });
@@ -592,7 +599,15 @@
                 .style("text-anchor", "middle")
                 .style("font-weight", "bold")
                 .attr("y", -9)
-                .text(function(d) { return d; });
+                .text(function(d) { 
+                    var axis_label = "";
+                    if(d == "class")  axis_label = "Class";
+                    else if(d == "area")  axis_label = "Area";
+                    else if(d == "width")  axis_label = "Width";
+                    else if(d == "height")  axis_label = "Height";
+                    else if(d == "centerX")  axis_label = "center X";
+                    else if(d == "centerY")  axis_label = "center Y";
+                    return axis_label; });
 
             // Add and store a brush for each axis.
             g.append("g")
@@ -821,6 +836,16 @@
                     .domain(myVars);
                     // .padding(0.05);
             
+            // Calculating the max and min values of each heatmap
+            var max_heatmap = [];
+            for (var cat_idx = 0; cat_idx < data.length; cat_idx++) {
+                var max = 0;
+                data[cat_idx].forEach (element => {
+                    if (element.value > max) max = element.value;
+                });
+                max_heatmap[cat_idx] = max;
+            }
+
             // Build color scale
             var myColor = d3.scale.linear()
                             .domain([1,100])
@@ -836,21 +861,23 @@
                         .append("rect")
                         .attr("y", (d,i)=>50 + i*5)
                         .attr("height", 5)
-                        .attr("x", 395)
+                        .attr("x", 375)
                         .attr("width", 20)
                         .attr("fill", d=>myColor(100-d));
                         // .attr("stroke", "gray");
+
 
             // Create label of color scale bar
             var rects = d3.select("#heatMapDiv")
                         .selectAll("svg")
                         .selectAll(".scaleBarLabel")
-                        .data([100, 75, 50, 25, 0]) //TODO: substituir pelo min e max de cada heatmap!!
+                        .data((d,i)=>[max_heatmap[i], (3*max_heatmap[i])/4, max_heatmap[i]/2, max_heatmap[i]/4, 0]) //TODO: substituir pelo min e max de cada heatmap!!
                         .enter()
                         .append("text")
-                        .attr("text-anchor", "end")
-                        .attr("x", 390)
-                        .attr("y", (d,i)=>55 + i*61)
+                        .attr("class", "scaleBarLabel")
+                        // .attr("text-anchor", "end")
+                        .attr("x", 397)
+                        .attr("y", (d,i)=>58 + i*61)
                         .text(d=>d);
 
             
@@ -874,7 +901,7 @@
                 .style("opacity", 1);
             }
             var mousemove = function(d) {
-                tooltip.html("The exact value of<br>this cell is: " + d.value)
+                tooltip.html("Number of occurrences: " + d.value)
                 .style("left", (d3.event.pageX+20) + "px")
                 .style("top", (d3.event.pageY-1950) + "px");
             }
