@@ -242,7 +242,7 @@
             }
 
             dataset_images = new google.visualization.DataTable();
-            dataset_images.addColumn('string', 'id');
+            dataset_images.addColumn('number', 'id');
             dataset_images.addColumn('number', 'width');
             dataset_images.addColumn('number', 'height');
             dataset_images.addColumn('string', 'file_name');
@@ -273,7 +273,7 @@
             dataset_annotations.addColumn('number', 'height');
             dataset_annotations.addColumn('number', 'category_id');
             dataset_annotations.addColumn('number', 'id');
-            dataset_annotations.addColumn('string', 'image_id');
+            dataset_annotations.addColumn('number', 'image_id');
             dataset_annotations.addColumn('number', 'is_crowd');
             dataset_annotations.addColumn('number', 'center_x');
             dataset_annotations.addColumn('number', 'center_y');
@@ -414,11 +414,11 @@
 
 
             //Draw the scatter plot chart
-            all_rows = [];
+            all_cats = [];
             for (var i = 0; i < dataset_categories.getNumberOfRows(); i++) {
-                all_rows.push(i);
+                all_cats.push(dataset_categories.getValue(i,0));
             }
-            var data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
+            var data_line = getLineChartValues(all_cats, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
             var options_line = {
                 legend: { position: 'top', maxLines: 3 },
                 width: '100%',
@@ -748,7 +748,7 @@
             for (cat of old_selected_classes) {
                 for (var row = 0; row < dataset_categories.getNumberOfRows(); row++) {
                     if (dataset_categories.getValue(row,0) == cat) {
-                        selected_rows.push(cat);
+                        selected_rows.push(row);
                     }
                 }
             }
@@ -875,13 +875,13 @@
                 .style("font-weight", "bold")
                 .style("font-size", "20px")
                 .text(function(d) { 
-                var class_label = "error";
-                for (var i = 0; i < dataset_categories.getNumberOfRows(); i++){
-                    if (d === dataset_categories.getValue(d, 0)) {
-                        class_label = dataset_categories.getValue(d, 1);
+                    var class_label = "error";
+                    for (var i = 0; i < dataset_categories.getNumberOfRows(); i++){
+                        if (d === dataset_categories.getValue(i, 0)) {
+                            class_label = dataset_categories.getValue(i, 1);
+                        }
                     }
-                }
-                return class_label; });
+                    return class_label; });
             
             var myGroups = [0,1,2,3,4,5,6,7,8,9]
             var myVars = [0,1,2,3,4,5,6,7,8,9]
@@ -934,8 +934,10 @@
             var rects = d3.select("#heatMapDiv")
                         .selectAll("svg")
                         .selectAll(".scaleBarLabel")
-                        .data((d,i)=>[grouped_table.getValue(old_selected_classes[i],1), Math.round(3*grouped_table.getValue(old_selected_classes[i],1)/4),
-                                        Math.round(grouped_table.getValue(old_selected_classes[i],1)/2), Math.round(grouped_table.getValue(old_selected_classes[i],1)/4), 0])
+                        .data((d,i)=>[grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1),
+                            Math.round(3*grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/4),
+                            Math.round(grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/2),
+                            Math.round(grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/4), 0])
                         .enter()
                         .append("text")
                         .attr("class", "scaleBarLabel")
@@ -1003,11 +1005,10 @@
         function getLineChartValues(selected_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds) {
             const countOccurrences = (arr, val) => arr.reduce((a, v) => (v === val ? a + 1 : a), 0);
             var imageOccurrences = {};
-            for (var key of selected_rows) {
-                var cat = dataset_categories.getValue(Number(key), 1);
+            for (var cat of selected_rows) {
                 imageOccurrences[cat] = {};
                 for (var img_id of dataset_ImgsIds) {
-                    var cont = countOccurrences(dataset_catToImgs[key], img_id);
+                    var cont = countOccurrences(dataset_catToImgs[cat], img_id);
                     if (imageOccurrences[cat][cont] > 0) {
                         imageOccurrences[cat][cont] += 1;
                     } else {
@@ -1017,7 +1018,7 @@
             }
             data_line_raw = [['x']];
             for (i of selected_rows) {
-                data_line_raw[0].push(dataset_categories.getValue(i, 1));
+                data_line_raw[0].push(dataset_categories.getValue(dataset_categories.getFilteredRows([{column: 0, value: i}])[0], 1));
             }
             var max_value = 0;
             for (i of Object.keys(imageOccurrences)) {
@@ -1029,9 +1030,8 @@
             for (var i = 0; i <= max_value; i++) {
                 data_line_raw.push([i]);
                 for (j of selected_rows) {
-                    var cat = dataset_categories.getValue(j, 1);
-                    if (imageOccurrences[cat][i] > 0) {
-                        data_line_raw[i+1].push(imageOccurrences[cat][i]);
+                    if (imageOccurrences[j][i] > 0) {
+                        data_line_raw[i+1].push(imageOccurrences[j][i]);
                     } else {
                         data_line_raw[i+1].push(0);
                     }
