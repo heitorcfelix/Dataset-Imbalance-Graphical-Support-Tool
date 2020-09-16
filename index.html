@@ -301,7 +301,7 @@
                     dataset_catToImgs[data_json.annotations[i].category_id].push(data_json.annotations[i].image_id)
                 }
             }
-            
+
             //TODO: tirar <<DEBUG>>
             // var table = new google.visualization.Table(document.getElementById('debugDiv1'));
             // table.draw(dataset_info, {showRowNumber: true, width: '100%', height: '100%'});
@@ -366,7 +366,7 @@
                             class_name = merged_table.getValue(i, 0);
                             for (var j = 0; j < dataset_categories.getNumberOfRows(); j++) {
                                 if (class_name == dataset_categories.getValue(j, 1)) {
-                                    old_selected_classes.push(j);
+                                    old_selected_classes.push(dataset_categories.getValue(j, 0));
                                 }
                             }
                         }
@@ -380,11 +380,11 @@
                         drawLocationImbalanceDash(dataset_categories, dataset_annotations, dataset_images, old_selected_classes)
                     } else {
                         pie_chart.draw(merged_table, options_pie);
-                        all_rows = [];
+                        all_cats = [];
                         for (var i = 0; i < dataset_categories.getNumberOfRows(); i++) {
-                            all_rows.push(i);
+                            all_cats.push(dataset_categories.getValue(i,0));
                         }
-                        data_line = getLineChartValues(all_rows, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
+                        data_line = getLineChartValues(all_cats, dataset_categories, dataset_catToImgs, dataset_ImgsIds);
                         line_chart.draw(data_line, options_line);
                         drawParallelCoordChart(dataset_annotations, dataset_categories, []);
                         drawStackedBar(dataset_annotations, []);
