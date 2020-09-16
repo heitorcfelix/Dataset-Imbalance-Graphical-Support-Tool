@@ -242,7 +242,7 @@
             }
 
             dataset_images = new google.visualization.DataTable();
-            dataset_images.addColumn('number', 'id');
+            dataset_images.addColumn('string', 'id');
             dataset_images.addColumn('number', 'width');
             dataset_images.addColumn('number', 'height');
             dataset_images.addColumn('string', 'file_name');
@@ -254,7 +254,7 @@
             dataset_ImgsIds = []
 
             for (var i = 0; i < data_json.images.length; i++) {
-                dataset_images.addRow([data_json.images[i].id,
+                dataset_images.addRow([data_json.images[i].id.toString(),
                                         data_json.images[i].width,
                                         data_json.images[i].height,
                                         data_json.images[i].file_name,
@@ -273,7 +273,7 @@
             dataset_annotations.addColumn('number', 'height');
             dataset_annotations.addColumn('number', 'category_id');
             dataset_annotations.addColumn('number', 'id');
-            dataset_annotations.addColumn('number', 'image_id');
+            dataset_annotations.addColumn('string', 'image_id');
             dataset_annotations.addColumn('number', 'is_crowd');
             dataset_annotations.addColumn('number', 'center_x');
             dataset_annotations.addColumn('number', 'center_y');
@@ -290,7 +290,7 @@
                                             data_json.annotations[i].bbox[3],
                                             data_json.annotations[i].category_id,
                                             data_json.annotations[i].id,
-                                            data_json.annotations[i].image_id,
+                                            data_json.annotations[i].image_id.toString(),
                                             data_json.annotations[i].iscrowd,
                                             center_x,
                                             center_y]);
