@@ -934,10 +934,20 @@
             var rects = d3.select("#heatMapDiv")
                         .selectAll("svg")
                         .selectAll(".scaleBarLabel")
-                        .data((d,i)=>[grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1),
-                            Math.round(3*grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/4),
-                            Math.round(grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/2),
-                            Math.round(grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/4), 0])
+                        .data((d,i)=>{
+                            var maximum = grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1);
+                            if (maximum >= 4) {
+                                return [maximum, Math.round(3*maximum/4), Math.round(maximum/2), Math.round(maximum/4), 0];
+                            } else if (maximum == 3) {
+                                return [maximum, , maximum/2, , 0];
+                            } else {
+                                return [maximum, , , , 0];
+                            }
+                            // [grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1),
+                            // Math.round(3*grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/4),
+                            // Math.round(grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/2),
+                            // Math.round(grouped_table.getValue(grouped_table.getFilteredRows([{column: 0, value: old_selected_classes[i]}])[0],1)/4), 0]
+                            })
                         .enter()
                         .append("text")
                         .attr("class", "scaleBarLabel")
