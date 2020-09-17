@@ -430,7 +430,7 @@
                 },
                 vAxis: {
                 title: 'Number of Images',
-                logScale: false,
+                logScale: true,
                 minValue: 0
                 }
             };
@@ -979,8 +979,8 @@
             var mousemove = function(d) {
                 cat = d3.select(this.parentNode)[0][0].id.split('_')[1];
                 tooltip.html("Number of occurrences: " + Math.floor(d.value*1.5*grouped_table.getValue(old_selected_classes[cat],1)))
-                .style("left", (d3.event.pageX+20) + "px")
-                .style("top", (d3.event.pageY-1950) + "px");
+                .style("left", (d3.event.pageX+10) + "px")
+                .style("top", (d3.event.pageY-1800) + "px");
             }
             var mouseleave = function(d) {
                 tooltip.style("opacity", 0)
