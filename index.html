@@ -69,6 +69,7 @@
             top: 1775px;
         }
 
+
         .classImbTitle, .scaleImbTitle, .objLocImbTitle{
             width: 1800;
             text-align: center;
@@ -521,11 +522,14 @@
                         return match_value; }
                     }]));
             }
+
             var merged_table = google.visualization.data.join(selected_cols_data, dataset_categories,
-                                'left', [[5,0]], [0,3,4,9,10], [1]);
-            var data_stacked = new google.visualization.DataView(merged_table);
-            data_stacked.setColumns([6,1,2,3,4,5]);
+                                'left', [[5,0]], [0,3,4,9,10,7], [1]);
+            merged_table = google.visualization.data.join(merged_table, dataset_images,
+                                'left', [[6,0]], [1,2,3,4,5,7], [3]);
             
+            var data_stacked = new google.visualization.DataView(merged_table);    
+            data_stacked.setColumns([6,1,2,3,4,5,7]);
             
             var csvFormattedDataTable = google.visualization.dataTableToCsv(data_stacked.toDataTable());
             var data_parallel = d3.csv.parseRows(csvFormattedDataTable, function(d) {
@@ -621,11 +625,17 @@
                     else if(d == "centerY")  axis_label = "center Y";
                     return axis_label; });
 
+            var cat_filter = [];
+            var min_max_filters = [];
             // Add and store a brush for each axis.
             g.append("g")
                 .attr("class", "brush")
                 .each(function(d) {
-                    d3.select(this).call(y[d].brush = d3.svg.brush().y(y[d]).on("brushstart", brushstart).on("brush", brush));
+                    d3.select(this).call(y[d].brush = d3.svg.brush().y(y[d])
+                    .on("brushstart", brushstart)
+                    .on("brush", brush)
+                    .on("brushend", brushend)
+                    );
                 })
                 .selectAll("rect")
                 .attr("x", -8)
@@ -633,38 +643,87 @@
 
             // AUXILIARY FUNCTIONS FOR PARALLEL COORDINATES CHART
             function position(d) {
-            var v = dragging[d];
-            return v == null ? x(d) : v;
+                var v = dragging[d];
+                return v == null ? x(d) : v;
             }
 
             function transition(g) {
-            return g.transition().duration(500);
+                return g.transition().duration(500);
             }
 
             // Returns the path for a given data point.
             function path(d) {
-            return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+                return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
             }
 
             function brushstart() {
-            d3.event.sourceEvent.stopPropagation();
+                d3.event.sourceEvent.stopPropagation();
             }
 
             // Handles a brush event, toggling the display of foreground lines.
             function brush() {
-            var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
-                extents = actives.map(function(p) { return y[p].brush.extent(); });
-            foreground.style("display", function(d) {
-                return actives.every(function(p, i) {
-                    if (typeof d[p] === 'string') {
-                        var categorical_vaue = y['class'](d[p]);
-                        return extents[i][0] <= categorical_vaue && categorical_vaue <= extents[i][1];
-                    } else {
-                        return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+                cat_filter = [];
+                min_max_filters = [Number.MAX_VALUE, 0,
+                                    Number.MAX_VALUE, 0,
+                                    Number.MAX_VALUE, 0, 
+                                    Number.MAX_VALUE, 0,
+                                    Number.MAX_VALUE, 0];
+                var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
+                    extents = actives.map(function(p) { return y[p].brush.extent(); });
+                
+                foreground.style("display", function(d) {
+                    return actives.every(function(p, i) {
+                        if (typeof d[p] === 'string') {
+                            var categorical_value = y['class'](d[p]);
+                            var is_inside = extents[i][0] <= categorical_value && categorical_value <= extents[i][1];
+                            // add filter
+                            if (is_inside && !cat_filter.includes(d[p]))
+                                cat_filter.push(d[p]);
+                            return is_inside;
+                        } else {
+                            var is_inside = extents[i][0] <= d[p] && d[p] <= extents[i][1];
+                            if(is_inside) {
+                                if(p === "area"){
+                                    if (d[p] < min_max_filters[0]) min_max_filters[0] = d[p];
+                                    if (d[p] > min_max_filters[1]) min_max_filters[1] = d[p];
+                                } else if (p === "width") {
+                                    if (d[p] < min_max_filters[2]) min_max_filters[2] = d[p];
+                                    if (d[p] > min_max_filters[3]) min_max_filters[3] = d[p];
+                                } else if (p === "height") {
+                                    if (d[p] < min_max_filters[4]) min_max_filters[4] = d[p];
+                                    if (d[p] > min_max_filters[5]) min_max_filters[5] = d[p];
+                                } else if (p === "centerX") {
+                                    if (d[p] < min_max_filters[6]) min_max_filters[6] = d[p];
+                                    if (d[p] > min_max_filters[7]) min_max_filters[7] = d[p];
+                                } else if (p === "centerY") {
+                                    if (d[p] < min_max_filters[8]) min_max_filters[8] = d[p];
+                                    if (d[p] > min_max_filters[9]) min_max_filters[9] = d[p];
+                                }
+                            }
+                            return is_inside;
+                        }
+                    }) ? null : "none";
+                });
+            }
 
-                    }
-                }) ? null : "none";
-            });
+            function brushend() {
+                var filters = []; //will store filters from brushes to show a filtered table after
+
+                cat_filter.forEach(element => {
+                    filters.push({column: 0, value: element});
+                });
+                for (var i = 0; i < 5; i++) {
+                    if(min_max_filters[2*i] != Number.MAX_VALUE)
+                        filters.push({column: i+1, minValue: min_max_filters[2*i], maxValue: min_max_filters[2*i+1]});
+                }
+                //update the table!
+                if ( filters.length > 0){
+                    var temp_data_stacked = new google.visualization.DataView(data_stacked);
+                    temp_data_stacked.setRows(data_stacked.getFilteredRows(filters));
+
+                    var table = new google.visualization.Table(document.getElementById('debugDiv1'));
+                    table.draw(temp_data_stacked, {showRowNumber: true, width: '100%', height: '100%'});
+                }
             }
             // END OF AUXILIARY FUNCTIONS FOR PARALLEL COORDINATES CHART
         }
