@@ -214,12 +214,15 @@
         var req = new XMLHttpRequest();
         req.onload = function(){
             data_json = JSON.parse(this.responseText);
-            parseFile(data_json);
+            parseFile();
         };
         req.open('GET', 'https://raw.githubusercontent.com/heitorcfelix/Dataset-Imbalance-Graphical-Support-Tool/master/filtred_coco_instances_val2017.json?token=AEXQ5YHE3ARLX4G4NEC4Y3S7OTURW');
         req.send();
         //open the file uploaded by user
-        var reader = new FileReader();  
+        var reader = new FileReader();
+        reader.onload = function() {
+            data_json = JSON.parse(reader.result);
+        }
     
         function loadFile() {      
             var file = document.querySelector('input[type=file]').files[0];
@@ -227,7 +230,6 @@
             reader.addEventListener("load", parseFile, false);
             if (file) {
                 reader.readAsText(file);
-                data_json = JSON.parse(reader.result);
             }
         }
     
