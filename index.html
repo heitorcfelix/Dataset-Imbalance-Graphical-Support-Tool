@@ -767,7 +767,13 @@
                         return match_value; }
                     }]));
             }
-            data_stacked.hideColumns([1,2,3,4,5,6,7,8]);
+            var merged_table = google.visualization.data.join(data_stacked, dataset_categories,
+                                'left', [[5,0]], [0,3,4,9,10,7], [1]);
+            merged_table = google.visualization.data.join(merged_table, dataset_images,
+                                'left', [[6,0]], [1,2,3,4,5,7], [3]);
+            
+            var data_stacked = new google.visualization.DataView(merged_table);    
+            data_stacked.setColumns([1,2,3,4,5,6,7]);
 
             // counting based on the set threshold values
             var fomatted_data_stacked = google.visualization.data.group(
@@ -816,6 +822,44 @@
             };
 
             var stacked_chart = new google.visualization.BarChart(document.getElementById("stackedDiv"));
+
+            function selectAreaHandler() {
+                var selectedItem = stacked_chart.getSelection();
+
+                const threshold1 = document.getElementById('down_thresh');
+                const threshold2 = document.getElementById('up_thresh');
+
+                const thresh1 = document.getElementById("label_thresh_low").innerHTML;
+                const thresh2 = document.getElementById("label_thresh_high").innerHTML;
+
+                _thresh1 = thresh1*thresh1;
+                _thresh2 = thresh2*thresh2;
+
+                if (selectedItem) {
+                    if (selectedItem.length == 1) {
+                        var temp_data_stacked = new google.visualization.DataView(data_stacked);
+                        temp_data_stacked.setColumns([5,0,1,2,3,4,6]);
+                        switch(selectedItem[0].column) {
+                            case 1:
+                                temp_data_stacked.setRows(temp_data_stacked.getFilteredRows([{column: 1, maxValue: _thresh1}]));
+                                break;
+                            case 2:
+                                temp_data_stacked.setRows(temp_data_stacked.getFilteredRows([{column: 1, minValue: _thresh1, maxValue: _thresh2}]));
+                                break;
+                            case 3:
+                                temp_data_stacked.setRows(temp_data_stacked.getFilteredRows([{column: 1, minValue: _thresh2}]));
+                                break;
+                        }
+
+                        document.getElementsByClassName("elementsTableTitle")[0].style.visibility = "visible";
+                        document.getElementById("elementsTableDiv").style.visibility = "visible";
+                        var table = new google.visualization.Table(document.getElementById('elementsTableDiv'));
+                        table.draw(temp_data_stacked, {showRowNumber: true, width: '100%', height: '100%'});
+                    }
+                }
+            }
+
+            google.visualization.events.addListener(stacked_chart, 'select', selectAreaHandler);
             stacked_chart.draw(view_stacked_table, options_fullStacked);
         }
         
